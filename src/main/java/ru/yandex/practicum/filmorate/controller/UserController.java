@@ -49,6 +49,11 @@ public class UserController {
         // формируем дополнительные данные
         log.trace("update field id (use getNextId)");
         user.setId(getNextId());
+
+        if (user.getName() == null || user.getName().isBlank()) {
+            log.debug("Обновление поля name. OldValue {}. NewValue {}", user.getName(), user.getLogin());
+            user.setName(user.getLogin());
+        }
         // сохраняем новую публикацию в памяти приложения
         log.info("create new user");
         users.put(user.getId(), user);
