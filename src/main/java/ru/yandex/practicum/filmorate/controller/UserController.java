@@ -101,8 +101,13 @@ public class UserController {
             oldUser.setEmail(newUser.getEmail());
             log.debug("Обновление поля login. OldValue {}. NewValue {}", oldUser.getLogin(), newUser.getLogin());
             oldUser.setLogin(newUser.getLogin());
-            log.debug("Обновление поля name. OldValue {}. NewValue {}", oldUser.getName(), newUser.getName());
-            oldUser.setName(newUser.getName());
+            if (newUser.getName() == null || newUser.getName().isBlank()) {
+                log.debug("Обновление поля name. OldValue {}. NewValue {}", oldUser.getName(), newUser.getLogin());
+                oldUser.setName(newUser.getLogin());
+            } else {
+                log.debug("Обновление поля name. OldValue {}. NewValue {}", oldUser.getName(), newUser.getName());
+                oldUser.setName(newUser.getName());
+            }
             log.debug("Обновление поля birthday. OldValue {}. NewValue {}", oldUser.getBirthday(), newUser.getBirthday());
             oldUser.setBirthday(newUser.getBirthday());
 
