@@ -64,7 +64,7 @@ public class FilmService {
                 .collect(Collectors.toList());
     }
 
-    public Collection<Film> getFilms(Logger log){
+    public Collection<Film> getFilms(Logger log) {
         return filmStorage.getFilms(log).values();
     }
 
