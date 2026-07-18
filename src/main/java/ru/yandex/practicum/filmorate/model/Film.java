@@ -4,6 +4,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Film.
@@ -17,4 +19,5 @@ public class Film {
     String description; // описание
     LocalDate releaseDate; // дата релиза
     int duration; // продолжительность фильма
+    Set<Long> likes = new HashSet<>();;
 }
