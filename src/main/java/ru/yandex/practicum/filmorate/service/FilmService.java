@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 
 @Service
 public class FilmService {
-
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
 
@@ -24,8 +23,9 @@ public class FilmService {
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
     }
+
     // Добавление лайка фильму от пользователя
-    public String  addLike(Long filmId, Long userId, Logger log) {
+    public String addLike(Long filmId, Long userId, Logger log) {
         Film film = filmStorage.findFilmById(filmId, log);
         if (film == null) {
             throw new NotFoundException("Фильм не найден");
@@ -39,7 +39,7 @@ public class FilmService {
         Set<Long> likes = film.getLikes();
         if (!likes.contains(userId)) {
             likes.add(userId);
-            return "Лайк успещно добавлен";
+            return "Лайк успешно добавлен";
             //filmStorage.updateFilm(film);
         } else {
             throw new ConditionsNotMetException("Пользователь уже поставил лайк этому фильму");
