@@ -2,125 +2,97 @@ package ru.yandex.practicum.filmorate.controller;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.UserService;
 
-import java.time.LocalDate;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @RestController
 @RequestMapping("/users")
 public class UserController {
     private final Map<Long, User> users = new HashMap<>();
     private static final Logger log = LoggerFactory.getLogger(UserController.class);
+    private final UserService userService;
+
+    @Autowired
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
 
     @GetMapping
-    public Collection<User> findAll() {
+    public ResponseEntity<Collection<User>> findAll() {
         log.info("return list users");
-        return users.values();
+        Collection<User> users = userService.getUsers(log);
+
+        if (users.isEmpty()) {
+            return ResponseEntity.noContent().build(); // 204 No Content — если фильмов нет
+        }
+        return ResponseEntity.ok(users); // 200 OK с объектом Film
     }
 
     @PostMapping
-    public User create(@RequestBody User user) {
-        if (user.getEmail() == null || user.getEmail().isBlank()) {
-            log.warn("WARN User Create Электронная почта должна быть указана");
-            throw new ConditionsNotMetException("Электронная почта должна быть указана");
-        }
-        if (!user.getEmail().contains("@")) {
-            log.warn("WARN User Create Электронная почта должна содержать символ @");
-            throw new ConditionsNotMetException("Электронная почта должна содержать символ @");
-        }
-        if (user.getLogin() == null || user.getLogin().isBlank()) {
-            log.warn("WARN User Create Логин должен быть указан");
-            throw new ConditionsNotMetException("Логин должен быть указан");
-        }
-        if (user.getLogin().contains(" ")) {
-            log.warn("WARN User Create Логин не должен содержать символ пробела");
-            throw new ConditionsNotMetException("Логин не должен содержать символ пробела");
-        }
-        if (user.getBirthday().isAfter(LocalDate.now())) {
-            log.warn("WARN User Create Дата рождения не может быть в будущем");
-            throw new ConditionsNotMetException("Дата рождения не может быть в будущем");
-        }
-        // формируем дополнительные данные
-        log.trace("update field id (use getNextId)");
-        user.setId(getNextId());
-
-        if (user.getName() == null || user.getName().isBlank()) {
-            log.debug("Обновление поля name. OldValue {}. NewValue {}", user.getName(), user.getLogin());
-            user.setName(user.getLogin());
-        }
-        // сохраняем новую публикацию в памяти приложения
-        log.info("create new user");
-        users.put(user.getId(), user);
-        return user;
-    }
-
-    private long getNextId() {
-        long currentMaxId = users.keySet()
-                .stream()
-                .mapToLong(id -> id)
-                .max()
-                .orElse(0);
-        return ++currentMaxId;
+    public ResponseEntity<User> create(@RequestBody User user) {
+        User newUser = userService.create(user, log);
+        return ResponseEntity.status(HttpStatus.CREATED).body(newUser);
     }
 
     @PutMapping
-    public User update(@RequestBody User newUser) {
-        // проверяем необходимые условия
-        if (newUser.getId() == null) {
-            log.warn("WARN User Update Id должен быть указан");
-            throw new ConditionsNotMetException("Id должен быть указан");
+    public ResponseEntity<User> update(@RequestBody User newUser) {
+        User updatedUser = userService.update(newUser, log);
+        return ResponseEntity.ok(updatedUser);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<User> getUser(@PathVariable Long id) {
+        User user = userService.findUserById(id, log);
+        if (user == null) {
+            return ResponseEntity.notFound().build(); // 404, если пользователя нет
         }
-        if (users.containsKey(newUser.getId())) {
-            if (newUser.getEmail() == null || newUser.getEmail().isBlank()) {
-                log.warn("WARN User Update Электронная почта должна быть указана");
-                throw new ConditionsNotMetException("Электронная почта должна быть указана");
-            }
-            if (!newUser.getEmail().contains("@")) {
-                log.warn("WARN User Update Электронная почта должна содержать символ @");
-                throw new ConditionsNotMetException("Электронная почта должна содержать символ @");
-            }
-            if (newUser.getLogin() == null || newUser.getLogin().isBlank()) {
-                log.warn("WARN User Update Логин должен быть указан");
-                throw new ConditionsNotMetException("Логин должен быть указан");
-            }
-            if (newUser.getLogin().contains(" ")) {
-                log.warn("WARN User Update Логин не должен содержать символ пробела");
-                throw new ConditionsNotMetException("Логин не должен содержать символ пробела");
-            }
-            if (newUser.getBirthday().isAfter(LocalDate.now())) {
-                log.warn("WARN User Update Дата рождения не может быть в будущем");
-                throw new ConditionsNotMetException("Дата рождения не может быть в будущем");
-            }
+        return ResponseEntity.ok(user); // 200 OK с данными пользователя
+    }
 
-            log.trace("Film Update Поиск фильма по полю id");
-            User oldUser = users.get(newUser.getId());
+    // Добавить в друзья
+    @PutMapping("/{id}/friends/{friendId}")
+    public ResponseEntity<Void> addFriend(
+            @PathVariable Long id,
+            @PathVariable Long friendId) {
+        userService.addFriend(id, friendId, log);
+        return ResponseEntity.ok().build(); // 200 OK — операция выполнена успешно
+    }
 
-            // если публикация найдена и все условия соблюдены, обновляем её содержимое
-            log.debug("Обновление поля email. OldValue {}. NewValue {}", oldUser.getEmail(), newUser.getEmail());
-            oldUser.setEmail(newUser.getEmail());
-            log.debug("Обновление поля login. OldValue {}. NewValue {}", oldUser.getLogin(), newUser.getLogin());
-            oldUser.setLogin(newUser.getLogin());
-            if (newUser.getName() == null || newUser.getName().isBlank()) {
-                log.debug("Обновление поля name. OldValue {}. NewValue {}", oldUser.getName(), newUser.getLogin());
-                oldUser.setName(newUser.getLogin());
-            } else {
-                log.debug("Обновление поля name. OldValue {}. NewValue {}", oldUser.getName(), newUser.getName());
-                oldUser.setName(newUser.getName());
+    // Удалить из друзей
+    @DeleteMapping("/{id}/friends/{friendId}")
+    public ResponseEntity<?> removeFriend(
+            @PathVariable Long id,
+            @PathVariable Long friendId) {
+
+            try {
+                userService.removeFriend(id, friendId, log);
+                return ResponseEntity.noContent().build();
+            } catch (Exception e) {
+                log.error("XXX", e);
+                throw e; // или вернуть кастомный ответ об ошибке
             }
-            log.debug("Обновление поля birthday. OldValue {}. NewValue {}", oldUser.getBirthday(), newUser.getBirthday());
-            oldUser.setBirthday(newUser.getBirthday());
+    }
 
-            log.info("update user");
+    // Получить список друзей пользователя
+    @GetMapping("/{id}/friends")
+    public ResponseEntity<List<User>> getFriends(@PathVariable Long id) {
+        List<User> friends = userService.getFriends(id, log);
+        return ResponseEntity.ok(friends);
+    }
 
-            return oldUser;
-        }
-        log.warn("WARN User Update Фильм с id = {} не найден", newUser.getId());
-        throw new NotFoundException("Пользователь с id = " + newUser.getId() + " не найден");
+
+    // Получить общих друзей с другим пользователем
+    @GetMapping("/{id}/friends/common/{otherId}")
+    public ResponseEntity<List<User>> getCommonFriends(
+            @PathVariable Long id,
+            @PathVariable Long otherId) {
+        List<User> commonFriends = userService.getCommonFriends(id, otherId, log);
+        return ResponseEntity.ok(commonFriends);
     }
 }
