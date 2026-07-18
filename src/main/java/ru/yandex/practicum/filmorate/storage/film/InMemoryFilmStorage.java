@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Component
-public class InMemoryFilmStorage implements FilmStorage{
+public class InMemoryFilmStorage implements FilmStorage {
     // Хранилище фильмов: ключ — ID фильма, значение — объект Film
     private final Map<Long, Film> films = new HashMap<>();
 
