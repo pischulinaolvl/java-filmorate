@@ -106,7 +106,7 @@ public class InMemoryFilmStorage implements FilmStorage{
     }
 
     @Override
-    public Map<Long, Film> getFilms(Logger log){
+    public Map<Long, Film> getFilms(Logger log) {
         return films;
     }
 }
