@@ -44,8 +44,7 @@ public class UserService {
             friends = new HashSet<>(); // создаём новый пустой Set
             friends.add(userId);
             friend.setFriends(friends);
-        }
-        else if (!friends.contains(userId)) {
+        } else if (!friends.contains(userId)) {
             friends.add(userId);
             userStorage.updateUser(friend, log);
         }
@@ -59,7 +58,7 @@ public class UserService {
 
         User user = userStorage.findUserById(userId, log);
 
-        if (user == null ) {
+        if (user == null) {
             throw new NotFoundException("Пользователь не найдены");
         }
 
@@ -70,7 +69,7 @@ public class UserService {
 
     public List<User> getUsersByID(Set<Long> userIds, Logger log) {
         List<User> users = new ArrayList<>();
-        if (userIds != null){
+        if (userIds != null) {
             for (Long id : userIds) {
                 User user = userStorage.findUserById(id, log);
                 if (user != null) {
@@ -95,14 +94,11 @@ public class UserService {
         Set<Long> friends = user.getFriends();
         if (friends == null) {
             log.warn("У пользователя с ID {} нет друзей", userId);
-        }else if (friends.contains(friendId)) {
+        } else if (friends.contains(friendId)) {
             friends.remove(friendId);
         } else {
             throw new NotFoundException("Пользователь или друг не найдены");
         }
-
-        //user.setFriends(friends);
-        //userStorage.updateUser(user);
 
         friends = friend.getFriends();
         if (friends == null) {
