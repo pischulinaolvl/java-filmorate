@@ -16,8 +16,8 @@ import java.util.*;
 public class UserController {
     private final Map<Long, User> users = new HashMap<>();
     private static final Logger log = LoggerFactory.getLogger(UserController.class);
-
     private final UserService userService;
+
     @Autowired
     public UserController(UserService userService) {
         this.userService = userService;
