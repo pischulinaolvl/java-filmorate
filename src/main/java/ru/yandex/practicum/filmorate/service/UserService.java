@@ -129,7 +129,7 @@ public class UserService {
         return getUsersByID(commonFriends, log);
     }
 
-    public Collection<User> getUsers(Logger log){
+    public Collection<User> getUsers(Logger log) {
         return userStorage.getUsers(log).values();
     }
 
@@ -141,7 +141,7 @@ public class UserService {
         return userStorage.updateUser(user, log);
     }
 
-    public User findUserById(Long id, Logger log){
+    public User findUserById(Long id, Logger log) {
         return userStorage.findUserById(id, log);
     }
 
