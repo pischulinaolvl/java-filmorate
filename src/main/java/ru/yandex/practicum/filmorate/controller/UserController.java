@@ -3,12 +3,12 @@ package ru.yandex.practicum.filmorate.controller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 
-import java.time.LocalDate;
 import java.util.*;
 
 @RestController
@@ -24,35 +24,44 @@ public class UserController {
     }
 
     @GetMapping
-    public Collection<User> findAll() {
+    public ResponseEntity<Collection<User>> findAll() {
         log.info("return list users");
-        return userService.getUsers(log);
+        Collection<User> users = userService.getUsers(log);
+
+        if (users.isEmpty()) {
+            return ResponseEntity.noContent().build(); // 204 No Content — если фильмов нет
+        }
+        return ResponseEntity.ok(users); // 200 OK с объектом Film
     }
 
-
     @PostMapping
-    public User create(@RequestBody User user) {
-        return userService.create(user, log);
+    public ResponseEntity<User> create(@RequestBody User user) {
+        User newUser = userService.create(user, log);
+        return ResponseEntity.status(HttpStatus.CREATED).body(newUser);
     }
 
     @PutMapping
-    public User update(@RequestBody User newUser) {
-        return userService.update(newUser, log);
+    public ResponseEntity<User> update(@RequestBody User newUser) {
+        User updatedUser = userService.update(newUser, log);
+        return ResponseEntity.ok(updatedUser);
     }
 
-    // Получить пользователя по ID
     @GetMapping("/{id}")
-    public User getUser(@PathVariable Long id) {
-        return userService.findUserById(id, log);
+    public ResponseEntity<User> getUser(@PathVariable Long id) {
+        User user = userService.findUserById(id, log);
+        if (user == null) {
+            return ResponseEntity.notFound().build(); // 404, если пользователя нет
+        }
+        return ResponseEntity.ok(user); // 200 OK с данными пользователя
     }
 
     // Добавить в друзья
     @PutMapping("/{id}/friends/{friendId}")
-    public void addFriend(
+    public ResponseEntity<Void> addFriend(
             @PathVariable Long id,
             @PathVariable Long friendId) {
-            userService.addFriend(id, friendId, log);
-            //return ResponseEntity.ok().build(); // 200
+        userService.addFriend(id, friendId, log);
+        return ResponseEntity.ok().build(); // 200 OK — операция выполнена успешно
     }
 
     // Удалить из друзей
@@ -72,15 +81,18 @@ public class UserController {
 
     // Получить список друзей пользователя
     @GetMapping("/{id}/friends")
-    public List<User> getFriends(@PathVariable Long id) {
-            return userService.getFriends(id, log);
+    public ResponseEntity<List<User>> getFriends(@PathVariable Long id) {
+        List<User> friends = userService.getFriends(id, log);
+        return ResponseEntity.ok(friends);
     }
+
 
     // Получить общих друзей с другим пользователем
     @GetMapping("/{id}/friends/common/{otherId}")
-    public List<User> getCommonFriends(
+    public ResponseEntity<List<User>> getCommonFriends(
             @PathVariable Long id,
             @PathVariable Long otherId) {
-            return userService.getCommonFriends(id, otherId, log);
+        List<User> commonFriends = userService.getCommonFriends(id, otherId, log);
+        return ResponseEntity.ok(commonFriends);
     }
 }

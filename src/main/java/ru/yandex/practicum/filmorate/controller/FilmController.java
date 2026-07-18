@@ -6,8 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
@@ -28,40 +26,42 @@ public class FilmController {
     }
 
     @GetMapping
-    public Collection<Film> findAll() {
+    public ResponseEntity<Collection<Film>> findAll() {
         log.info("return list films");
-        return filmService.getFilms(log);
+        Collection<Film> films = filmService.getFilms(log);
+
+        if (films.isEmpty()) {
+            return ResponseEntity.noContent().build(); // 204 No Content — если фильмов нет
+        }
+        return ResponseEntity.ok(films); // 200 OK с объектом Film
     }
 
     @PostMapping
-    public Film create(@RequestBody Film film) {
-        return filmService.create(film, log);
+    public ResponseEntity<Film> create(@RequestBody Film film) {
+        Film createdFilm = filmService.create(film, log);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdFilm);
     }
 
     @PutMapping
-    public Film update(@RequestBody Film newFilm) {
-        return filmService.update(newFilm, log);
+    public ResponseEntity<Film> update(@RequestBody Film newFilm) {
+        Film updatedFilm = filmService.update(newFilm, log);
+        return ResponseEntity.ok(updatedFilm);
     }
 
-    /*@PutMapping("/{id}/like/{userId}")
-    public ResponseEntity<String> addLike(@PathVariable Long id, @PathVariable Long userId) {
-        try {
-            filmService.addLike(id, userId, log);
-            //return ResponseEntity.badRequest().body("Invalid count value");
-            return ResponseEntity.badRequest().body("Лайк добавлен");
-        } catch (NotFoundException e) {
-            return ResponseEntity.badRequest().body("Ошибка определения объекта");
-        } catch (ConditionsNotMetException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build(); // 500
-        }
-    }*/
     @PutMapping("/{id}/like/{userId}")
-    public String addLike(@PathVariable Long id, @PathVariable Long userId) {
-        return filmService.addLike(id, userId, log);
+    public ResponseEntity<String> addLike(@PathVariable Long id, @PathVariable Long userId) {
+        filmService.addLike(id, userId, log);
+        return ResponseEntity.ok("Лайк добавлен");
     }
 
     @GetMapping("/popular")
-    public List<Film> getPopularFilms(@RequestParam(defaultValue = "10") Integer count) {
-        return filmService.getPopularFilms(count, log);
+    public ResponseEntity<List<Film>> getPopularFilms(@RequestParam(defaultValue = "10") Integer count) {
+        List<Film> popularFilms = filmService.getPopularFilms(count, log);
+
+        if (popularFilms.isEmpty()) {
+            return ResponseEntity.noContent().build(); // 204 No Content — если фильмов нет
+        }
+
+        return ResponseEntity.ok(popularFilms);   // 200 OK с объектом Film
     }
 }

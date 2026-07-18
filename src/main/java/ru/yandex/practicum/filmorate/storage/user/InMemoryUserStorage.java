@@ -21,10 +21,6 @@ public class InMemoryUserStorage implements UserStorage {
     @Override
     public User createUser(User user, Logger log) {
         // Если у пользователя ещё нет ID, присваиваем новый
-        /*if (user.getId() == null) {
-            user.setId(nextId++);
-        }
-        users.put(user.getId(), user);*/
         if (user.getEmail() == null || user.getEmail().isBlank()) {
             log.warn("WARN User Create Электронная почта должна быть указана");
             throw new ConditionsNotMetException("Электронная почта должна быть указана");
@@ -66,14 +62,6 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public User updateUser(User newUser, Logger log) {
-        /*Long id = user.getId();
-        // Проверяем, существует ли пользователь с таким ID
-        if (users.containsKey(id)) {
-            users.put(id, user);
-        } else {
-            throw new IllegalArgumentException("Пользователь с ID " + id + " не найден");
-        }
-        */
         // проверяем необходимые условия
         if (newUser.getId() == null) {
             log.warn("WARN User Update Id должен быть указан");
