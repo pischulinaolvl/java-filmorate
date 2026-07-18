@@ -19,6 +19,7 @@ public class UserService {
     public UserService(UserStorage userStorage) {
         this.userStorage = userStorage;
     }
+
     // Добавление пользователя в друзья
     public void addFriend(Long userId, Long friendId, Logger log) {
         User user = userStorage.findUserById(userId, log);
@@ -29,24 +30,23 @@ public class UserService {
         }
 
         Set<Long> friends = user.getFriends();
-        if (friends == null){
+        if (friends == null) {
             friends = new HashSet<>(); // создаём новый пустой Set
             friends.add(friendId);
             user.setFriends(friends);
-        }
-        else if (!friends.contains(friendId)) {
+        } else if (!friends.contains(friendId)) {
             friends.add(friendId);
             userStorage.updateUser(user, log);
         }
+
         friends = friend.getFriends();
-        if (friends == null){
+        if (friends == null) {
             friends = new HashSet<>(); // создаём новый пустой Set
             friends.add(userId);
             friend.setFriends(friends);
         }
         else if (!friends.contains(userId)) {
             friends.add(userId);
-            //user.setFriends(friends);
             userStorage.updateUser(friend, log);
         }
     }
