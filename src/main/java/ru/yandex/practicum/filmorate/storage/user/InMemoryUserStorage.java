@@ -121,7 +121,7 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
-    public Map<Long, User> getUsers(Logger log){
+    public Map<Long, User> getUsers(Logger log) {
         return users;
     }
 
