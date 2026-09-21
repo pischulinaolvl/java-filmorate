@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Repository
-public class FriendDbStorage implements FriendStorage{
+public class FriendDbStorage implements FriendStorage {
     private final JdbcTemplate jdbcTemplate;
 
     public FriendDbStorage(JdbcTemplate jdbcTemplate) {
