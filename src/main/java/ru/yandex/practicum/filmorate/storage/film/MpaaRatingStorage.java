@@ -6,8 +6,12 @@ import java.util.List;
 
 public interface MpaaRatingStorage {
     MpaaRating getMpaById(Long id);
+
     List<MpaaRating> getAllMpa();
+
     MpaaRating createMpa(MpaaRating mpa);
+
     MpaaRating updateMpa(MpaaRating mpa);
+
     void deleteMpa(Long id);
 }
