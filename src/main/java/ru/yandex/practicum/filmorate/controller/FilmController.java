@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
@@ -34,6 +35,20 @@ public class FilmController {
             return ResponseEntity.noContent().build(); // 204 No Content — если фильмов нет
         }
         return ResponseEntity.ok(films); // 200 OK с объектом Film
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Film> getFilmById(@PathVariable Long id) {
+        log.info("Запрос фильма с ID: {}", id);
+
+        try {
+            Film film = filmService.getFilmById(id);
+            return ResponseEntity.ok(film);
+        } catch (NotFoundException e) {
+            // Если сервис выбросил NotFoundException, возвращаем 404 клиенту
+            log.warn("Фильм с ID {} не найден", id);
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PostMapping

@@ -114,4 +114,14 @@ public class FilmService {
     public Film update(Film film, Logger log) {
         return filmStorage.updateFilm(film);
     }
+
+    public Film getFilmById(Long id) {
+        Film film = filmStorage.findFilmById(id);
+
+        if (film == null) {
+            throw new NotFoundException("Фильм с ID " + id + " не найден");
+        }
+
+        return film;
+    }
 }

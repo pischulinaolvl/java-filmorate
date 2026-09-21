@@ -1,6 +1,11 @@
 package ru.yandex.practicum.filmorate.storage.film;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcDaoSupport;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
@@ -20,9 +25,11 @@ import java.util.stream.Collectors;
 public class FilmDbStorage implements FilmStorage {
 
     private final JdbcTemplate jdbcTemplate;
+    private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
-    public FilmDbStorage(JdbcTemplate jdbcTemplate) {
+    public FilmDbStorage(JdbcTemplate jdbcTemplate, NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
+        this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
     }
 
     @Override
@@ -43,7 +50,7 @@ public class FilmDbStorage implements FilmStorage {
             throw new ConditionsNotMetException("Рейтинг MPAA обязателен и должен иметь ID");
         }
 
-        String insertFilmSql = "INSERT INTO film (name, description, release_date, duration, mpaa_rating_id) VALUES (?, ?, ?, ?, ?)";
+        /*String insertFilmSql = "INSERT INTO film (name, description, release_date, duration, mpaa_rating_id) VALUES (?, ?, ?, ?, ?)";
         jdbcTemplate.update(insertFilmSql,
                 film.getName(),
                 film.getDescription(),
@@ -53,13 +60,33 @@ public class FilmDbStorage implements FilmStorage {
         );
 
         String selectIdSql = "SELECT id FROM film WHERE name = ? AND release_date = ?";
-        Long newFilmId = jdbcTemplate.queryForObject(selectIdSql, Long.class, film.getName(), film.getReleaseDate());
+        Long newFilmId = jdbcTemplate.queryForObject(selectIdSql, Long.class, film.getName(), film.getReleaseDate());*/
+
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+
+        String sql = "INSERT INTO film (name, description, release_date, duration, mpaa_rating_id) " +
+                "VALUES (:name, :description, :release_date, :duration, :mpa_id)";
+
+        MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("name", film.getName());
+        params.addValue("description", film.getDescription());
+// Важно: передаем LocalDate, драйвер сам конвертирует в SQL Date
+        params.addValue("release_date", film.getReleaseDate());
+        params.addValue("duration", film.getDuration());
+        params.addValue("mpa_id", film.getMpa().getId());
+
+        namedParameterJdbcTemplate.update(sql, params, keyHolder);
+
+        Long newFilmId = keyHolder.getKey().longValue();
 
         if (newFilmId == null) {
             throw new NotFoundException("Не удалось получить ID созданного фильма");
         }
 
         film.setId(newFilmId);
+
+        System.out.println("DEBUG: Пытаемся сохранить жанры для фильма ID: " + film.getId());
+        System.out.println("DEBUG: Список жанров на входе: " + film.getGenres());
 
         if (film.getGenres() != null && !film.getGenres().isEmpty()) {
             String insertGenreLinkSql = "INSERT INTO film_genre (film_id, genre_id) VALUES (?, ?)";
@@ -165,11 +192,52 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public Film findFilmById(Long id) {
-        String sql = "SELECT * FROM film WHERE id = ?";
+        // 1. Получаем основные данные фильма + данные MPA через JOIN
+        // Мы берем все поля фильма и поля рейтинга
+        String filmSql = """
+        SELECT f.id, f.name, f.description, f.release_date, f.duration,
+               m.id as mpa_id, m.name as mpa_name, m.description as mpa_desc
+        FROM film f
+        JOIN mpaa_rating m ON f.mpaa_rating_id = m.id
+        WHERE f.id = ?
+    """;
+
         try {
-            return jdbcTemplate.queryForObject(sql, new FilmRowMapper(), id);
+            // Используем специальный маппер, который знает про колонки mpa_*
+            Film film = jdbcTemplate.queryForObject(filmSql, new ru.yandex.practicum.filmorate.storage.film.FilmWithMpaRowMapper(), id);
+
+            if (film == null) {
+                return null;
+            }
+
+            // 2. Получаем список жанров отдельным запросом
+            // Запрос возвращает просто список ID и имен жанров для этого фильма
+            String genresSql = "SELECT g.id, g.name FROM genre g JOIN film_genre fg ON g.id = fg.genre_id WHERE fg.film_id = ?";
+
+            List<Genre> genres = jdbcTemplate.query(genresSql, (rs, rowNum) -> {
+                Genre g = new Genre();
+                g.setId(rs.getLong("id"));
+                g.setName(rs.getString("name"));
+                return g;
+            }, id);
+
+            // 3. Собираем всё вместе
+            film.setGenres(genres);
+
+            return film;
         } catch (EmptyResultDataAccessException e) {
+            // Это нормально: фильма с таким ID просто нет в базе
             return null;
+        } catch (Exception e) {
+            // ВАЖНО: Добавь этот блок! Он поймает ошибку маппера.
+            System.out.println("=== КРИТИЧЕСКАЯ ОШИБКА В МАППЕРЕ ===");
+            System.out.println("Текст ошибки: " + e.getMessage());
+            System.out.println("Тип ошибки: " + e.getClass().getName());
+            e.printStackTrace(); // Это выведет полный стек вызовов (где именно упало)
+
+            // Не возвращай null молча! Брось исключение или верни null с логом,
+            // но главное — ты должен увидеть текст ошибки в консоли.
+            throw new RuntimeException("Ошибка при маппинге фильма: " + e.getMessage(), e);
         }
     }
 
