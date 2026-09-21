@@ -95,14 +95,10 @@ public class FilmDbStorage implements FilmStorage {
                     // 3. Попытка вставки
                     int rowsAffected = jdbcTemplate.update(insertGenreLinkSql, newFilmId, genreId);
                     System.out.println("Успешно добавлено: film_id=" + newFilmId + ", genre_id=" + genreId + " (затронуто строк: " + rowsAffected + ")");
-
                 } catch (org.springframework.dao.DuplicateKeyException e) {
-                    // Случай А: Такая связь уже есть (база очищена не полностью)
                     System.out.println("Инфо: Связь уже существует (film_id=" + newFilmId + ", genre_id=" + genreId + "). Пропускаем.");
-                    // Мы НЕ выбрасываем ошибку, просто идем дальше. Фильм создан, связь есть.
                 }
                 catch (org.springframework.dao.DataIntegrityViolationException e) {
-                    // Случай Б: Такого жанра вообще нет в таблице genre (ошибка FK)
                     throw new NotFoundException(
                             "Не удалось связать фильм с жанром ID: " + genreId +
                                     ". Возможно, жанр отсутствует в базе данных. Проверьте data.sql."
