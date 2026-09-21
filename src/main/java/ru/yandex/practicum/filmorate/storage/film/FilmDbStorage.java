@@ -97,14 +97,12 @@ public class FilmDbStorage implements FilmStorage {
                     System.out.println("Успешно добавлено: film_id=" + newFilmId + ", genre_id=" + genreId + " (затронуто строк: " + rowsAffected + ")");
                 } catch (org.springframework.dao.DuplicateKeyException e) {
                     System.out.println("Инфо: Связь уже существует (film_id=" + newFilmId + ", genre_id=" + genreId + "). Пропускаем.");
-                }
-                catch (org.springframework.dao.DataIntegrityViolationException e) {
+                } catch (org.springframework.dao.DataIntegrityViolationException e) {
                     throw new NotFoundException(
                             "Не удалось связать фильм с жанром ID: " + genreId +
                                     ". Возможно, жанр отсутствует в базе данных. Проверьте data.sql."
                     );
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     // Случай В: Любая другая непредвиденная ошибка
                     throw new RuntimeException("Ошибка при сохранении связи фильм-жанр: " + e.getMessage(), e);
                 }
