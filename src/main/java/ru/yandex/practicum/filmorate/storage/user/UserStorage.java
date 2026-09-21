@@ -7,16 +7,16 @@ import java.util.Map;
 
 public interface UserStorage {
     // Метод для добавления фильма
-    User createUser(User user, Logger log);
+    User createUser(User user);
 
     // Метод для удаления фильма по идентификатору
-    void removeUser(Long id, Logger log);
+    void removeUser(Long id);
 
     // Метод для обновления фильма
-    User updateUser(User user, Logger log);
+    User updateUser(User user);
 
     // Метод для поиска фильма по идентификатору
-    User findUserById(Long id, Logger log);
+    User findUserById(Long id);
 
-    Map<Long, User> getUsers(Logger log);
+    Map<Long, User> getUsers();
 }

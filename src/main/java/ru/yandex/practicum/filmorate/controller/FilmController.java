@@ -55,13 +55,21 @@ public class FilmController {
     }
 
     @GetMapping("/popular")
-    public ResponseEntity<List<Film>> getPopularFilms(@RequestParam(defaultValue = "10") Integer count) {
+    public ResponseEntity<List<Film>> getPopularFilms(
+            @RequestParam(defaultValue = "10") Integer count) {
+
+        log.info("Запрос популярных фильмов, count={}", count);
+
+        // Получаем уже отсортированный список из сервиса (логика в БД)
         List<Film> popularFilms = filmService.getPopularFilms(count, log);
 
         if (popularFilms.isEmpty()) {
-            return ResponseEntity.noContent().build(); // 204 No Content — если фильмов нет
+            log.warn("Популярных фильмов не найдено (список пуст)");
+            // Возвращаем пустой JSON-массив [] со статусом 200 OK
+            return ResponseEntity.ok(popularFilms);
         }
 
-        return ResponseEntity.ok(popularFilms);   // 200 OK с объектом Film
+        log.info("Возвращено {} популярных фильмов", popularFilms.size());
+        return ResponseEntity.ok(popularFilms);
     }
 }

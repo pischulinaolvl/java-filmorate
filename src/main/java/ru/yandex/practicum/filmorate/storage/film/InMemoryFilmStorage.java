@@ -8,6 +8,7 @@ import ru.yandex.practicum.filmorate.model.Film;
 
 import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Component
@@ -20,22 +21,18 @@ public class InMemoryFilmStorage implements FilmStorage {
     private long nextId = 1L;
 
     @Override
-    public Film createFilm(Film film, Logger log) {
+    public Film createFilm(Film film) {
         if (film.getName() == null || film.getName().isBlank()) {
-            log.warn("WARN Film Create Название фильма не может быть пустым");
             throw new ConditionsNotMetException("Название фильма не может быть пустым");
         }
 
         if (film.getDescription().length() > 200) {
-            log.warn("WARN Film Create Описание не может быть длиннее 200 символов");
             throw new ConditionsNotMetException("Описание не может быть длиннее 200 символов");
         }
         if (film.getReleaseDate().isBefore(minDate)) {
-            log.warn("WARN Film Create Дата релиза не может быть раньше, чем 28 декабря 1895");
             throw new ConditionsNotMetException("Дата релиза не может быть раньше, чем 28 декабря 1895");
         }
         if (!(film.getDuration() > 0)) {
-            log.warn("WARN Film Create Продолжительность фильма должна быть положительныи числом");
             throw new ConditionsNotMetException("Продолжительность фильма должна быть положительныи числом");
         }
 
@@ -44,69 +41,61 @@ public class InMemoryFilmStorage implements FilmStorage {
             film.setId(nextId++);
         }
 
-        log.info("create new film");
         films.put(film.getId(), film);
         return  film;
     }
 
     @Override
-    public void removeFilm(Long id, Logger log) {
+    public void removeFilm(Long id) {
         films.remove(id);
     }
 
     @Override
-    public Film updateFilm(Film newFilm, Logger log) {
+    public Film updateFilm(Film newFilm) {
         // проверяем необходимые условия
         if (newFilm.getId() == null) {
-            log.warn("WARN Film Update Id должен быть указан");
             throw new ConditionsNotMetException("Id должен быть указан");
         }
         if (films.containsKey(newFilm.getId())) {
             if (newFilm.getName() == null || newFilm.getName().isBlank()) {
-                log.warn("WARN Film Update Название фильма не может быть пустым");
                 throw new ConditionsNotMetException("Название фильма не может быть пустым");
             }
             if (newFilm.getDescription().length() > 200) {
-                log.warn("WARN Film Update Описание не может быть длиннее 200 символов");
                 throw new ConditionsNotMetException("Описание не может быть длиннее 200 символов");
             }
             if (newFilm.getReleaseDate().isBefore(minDate)) {
-                log.warn("WARN Film Update Дата релиза не может быть раньше, чем 28 декабря 1895");
                 throw new ConditionsNotMetException("Дата релиза не может быть раньше, чем 28 декабря 1895");
             }
             if (!(newFilm.getDuration() > 0)) {
-                log.warn("WARN Film Update Продолжительность фильма должна быть положительныи числом");
                 throw new ConditionsNotMetException("Продолжительность фильма должна быть положительныи числом");
             }
 
-            log.trace("Film Update Поиск фильма по полю id");
             Film oldFilm = films.get(newFilm.getId());
 
             // если публикация найдена и все условия соблюдены, обновляем её содержимое
-            log.debug("Обновление поля name. OldValue {}. NewValue {}", oldFilm.getName(), newFilm.getName());
             oldFilm.setName(newFilm.getName());
-            log.debug("Обновление поля description. OldValue {}. NewValue {}", oldFilm.getDescription(), newFilm.getDescription());
             oldFilm.setDescription(newFilm.getDescription());
-            log.debug("Обновление поля releaseDate. OldValue {}. NewValue {}", oldFilm.getReleaseDate(), newFilm.getReleaseDate());
             oldFilm.setReleaseDate(newFilm.getReleaseDate());
-            log.debug("Обновление поля duration. OldValue {}. NewValue {}", oldFilm.getDuration(), newFilm.getDuration());
             oldFilm.setDuration(newFilm.getDuration());
 
-            log.info("update film");
             return oldFilm;
         } else {
-            log.warn("WARN Film Update Фильм с id = {} не найден", newFilm.getId());
             throw new NotFoundException("Фильм с id = " + newFilm.getId() + " не найден");
         }
     }
 
     @Override
-    public Film findFilmById(Long id, Logger log) {
+    public Film findFilmById(Long id) {
         return films.get(id); // Возвращает null, если фильм не найден
     }
 
     @Override
-    public Map<Long, Film> getFilms(Logger log) {
+    public Map<Long, Film> getFilms() {
         return films;
+    }
+
+    @Override
+    public List<Film> getPopularFilms(int count) {
+        return null;
     }
 }

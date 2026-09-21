@@ -1,13 +1,30 @@
-package ru.yandex.practicum.filmorate;
-
+import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
+import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.user.UserDbStorage;
 
-@SpringBootTest
-class FilmorateApplicationTests {
+import java.util.Optional;
 
-	@Test
-	void contextLoads() {
-	}
+import static org.assertj.core.api.Assertions.assertThat;
 
+@JdbcTest
+@AutoConfigureTestDatabase
+@RequiredArgsConstructor(onConstructor_ = @Autowired)
+class FilmoRateApplicationTests {
+    private final UserDbStorage userStorage;
+
+    /*@Test
+    public void testFindUserById() {
+
+        Optional<User> userOptional = userStorage.findUserById(1L);
+
+        assertThat(userOptional)
+                .isPresent()
+                .hasValueSatisfying(user ->
+                        assertThat(user).hasFieldOrPropertyWithValue("id", 1)
+                );
+    }*/
 }

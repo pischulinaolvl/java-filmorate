@@ -81,13 +81,13 @@ public class UserController {
 
     // Получить список друзей пользователя
     @GetMapping("/{id}/friends")
-    public ResponseEntity<List<User>> getFriends(@PathVariable Long id) {
-        List<User> friends = userService.getFriends(id, log);
+    public ResponseEntity<List<Map<String, Object>>> getFriends(@PathVariable Long id) {
+        // 1. Получаем сырые данные из сервиса (это Map<Long, String>)
+        List<Map<String, Object>> friends = userService.getFriends(id, log);
         return ResponseEntity.ok(friends);
     }
 
-
-    // Получить общих друзей с другим пользователем
+    // 2. Сразу превращаем в нужный формат и возвращаем    // Получить общих друзей с другим пользователей
     @GetMapping("/{id}/friends/common/{otherId}")
     public ResponseEntity<List<User>> getCommonFriends(
             @PathVariable Long id,
