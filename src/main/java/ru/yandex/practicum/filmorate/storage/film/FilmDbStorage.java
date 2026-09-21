@@ -2,7 +2,6 @@ package ru.yandex.practicum.filmorate.storage.film;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcDaoSupport;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -10,10 +9,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.FilmRowMapper;
-import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.MpaaRating;
+import ru.yandex.practicum.filmorate.model.*;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -49,18 +45,6 @@ public class FilmDbStorage implements FilmStorage {
         if (film.getMpa() == null || film.getMpa().getId() == null) {
             throw new ConditionsNotMetException("Рейтинг MPAA обязателен и должен иметь ID");
         }
-
-        /*String insertFilmSql = "INSERT INTO film (name, description, release_date, duration, mpaa_rating_id) VALUES (?, ?, ?, ?, ?)";
-        jdbcTemplate.update(insertFilmSql,
-                film.getName(),
-                film.getDescription(),
-                film.getReleaseDate(),
-                film.getDuration(),
-                film.getMpa().getId()
-        );
-
-        String selectIdSql = "SELECT id FROM film WHERE name = ? AND release_date = ?";
-        Long newFilmId = jdbcTemplate.queryForObject(selectIdSql, Long.class, film.getName(), film.getReleaseDate());*/
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
@@ -204,7 +188,7 @@ public class FilmDbStorage implements FilmStorage {
 
         try {
             // Используем специальный маппер, который знает про колонки mpa_*
-            Film film = jdbcTemplate.queryForObject(filmSql, new ru.yandex.practicum.filmorate.storage.film.FilmWithMpaRowMapper(), id);
+            Film film = jdbcTemplate.queryForObject(filmSql, new FilmWithMpaRowMapper(), id);
 
             if (film == null) {
                 return null;

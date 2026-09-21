@@ -1,8 +1,6 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
-import org.slf4j.Logger;
 import ru.yandex.practicum.filmorate.model.Film;
-
 import java.util.List;
 import java.util.Map;
 

@@ -4,9 +4,6 @@ import org.springframework.jdbc.core.RowMapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.Set;
 
 public class FilmRowMapper implements RowMapper<Film> {
     @Override

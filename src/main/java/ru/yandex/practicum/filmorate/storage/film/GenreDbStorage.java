@@ -1,4 +1,4 @@
-package ru.yandex.practicum.filmorate.storage.genre;
+package ru.yandex.practicum.filmorate.storage.film;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -7,7 +7,6 @@ import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.GenreRowMapper;
-import ru.yandex.practicum.filmorate.storage.film.GenreStorage;
 
 import java.util.List;
 

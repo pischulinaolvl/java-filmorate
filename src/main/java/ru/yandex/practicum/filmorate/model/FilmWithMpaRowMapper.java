@@ -1,8 +1,6 @@
-package ru.yandex.practicum.filmorate.storage.film; // Или тот пакет, где у тебя лежат мапперы
+package ru.yandex.practicum.filmorate.model; // Или тот пакет, где у тебя лежат мапперы
 
 import org.springframework.jdbc.core.RowMapper;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.MpaaRating;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;

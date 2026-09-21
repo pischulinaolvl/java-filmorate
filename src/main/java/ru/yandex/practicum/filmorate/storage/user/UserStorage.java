@@ -1,6 +1,5 @@
 package ru.yandex.practicum.filmorate.storage.user;
 
-import org.slf4j.Logger;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.Map;
