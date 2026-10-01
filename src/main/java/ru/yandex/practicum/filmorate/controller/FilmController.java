@@ -4,10 +4,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.dto.film.FilmDto;
+import ru.yandex.practicum.filmorate.dto.film.NewFilmRequest;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.repository.film.FilmMapper;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.util.Collection;
@@ -27,64 +28,51 @@ public class FilmController {
     }
 
     @GetMapping
-    public ResponseEntity<Collection<Film>> findAll() {
-        log.info("return list films");
-        Collection<Film> films = filmService.getFilms(log);
-
-        if (films.isEmpty()) {
-            return ResponseEntity.noContent().build(); // 204 No Content — если фильмов нет
-        }
-        return ResponseEntity.ok(films); // 200 OK с объектом Film
+    public Collection<FilmDto> findAll() {
+        log.info("Запрос списка всех фильмов");
+        Collection<FilmDto> result = filmService.getFilms(log);
+        return result;
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Film> getFilmById(@PathVariable Long id) {
+    public FilmDto getFilmById(@PathVariable Long id) {
         log.info("Запрос фильма с ID: {}", id);
-
-        try {
-            Film film = filmService.getFilmById(id);
-            return ResponseEntity.ok(film);
-        } catch (NotFoundException e) {
-            // Если сервис выбросил NotFoundException, возвращаем 404 клиенту
-            log.warn("Фильм с ID {} не найден", id);
-            return ResponseEntity.notFound().build();
-        }
+        return filmService.getFilmById(id);
     }
 
     @PostMapping
-    public ResponseEntity<Film> create(@RequestBody Film film) {
-        Film createdFilm = filmService.create(film, log);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdFilm);
+    @ResponseStatus(org.springframework.http.HttpStatus.CREATED)
+    public FilmDto create(@RequestBody NewFilmRequest filmRequest) {
+        log.info("Создание нового фильма по запросу: {}", filmRequest);
+        return filmService.create(filmRequest, log);
     }
 
     @PutMapping
-    public ResponseEntity<Film> update(@RequestBody Film newFilm) {
-        Film updatedFilm = filmService.update(newFilm, log);
-        return ResponseEntity.ok(updatedFilm);
+    public FilmDto update(@RequestBody FilmDto filmDto) {
+        log.info("Изменение фильма по запросу: {}", filmDto);
+        return filmService.update(filmDto, log);
     }
 
     @PutMapping("/{id}/like/{userId}")
-    public ResponseEntity<String> addLike(@PathVariable Long id, @PathVariable Long userId) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void  addLike(@PathVariable Long id, @PathVariable Long userId) {
+        log.info("Пользователь {} ставит лайк фильму {}", userId, id);
         filmService.addLike(id, userId, log);
-        return ResponseEntity.ok("Лайк добавлен");
+    }
+
+    @DeleteMapping("/{id}/like/{userId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT) // Возвращает 204 No Content
+    public void removeLike(@PathVariable Long id, @PathVariable Long userId) {
+        log.info("Пользователь {} убирает лайк у фильма {}", userId, id);
+        filmService.removeLike(id, userId, log);
     }
 
     @GetMapping("/popular")
-    public ResponseEntity<List<Film>> getPopularFilms(
+    public List<FilmDto> getPopularFilms(
             @RequestParam(defaultValue = "10") Integer count) {
-
         log.info("Запрос популярных фильмов, count={}", count);
 
-        // Получаем уже отсортированный список из сервиса (логика в БД)
         List<Film> popularFilms = filmService.getPopularFilms(count, log);
-
-        if (popularFilms.isEmpty()) {
-            log.warn("Популярных фильмов не найдено (список пуст)");
-            // Возвращаем пустой JSON-массив [] со статусом 200 OK
-            return ResponseEntity.ok(popularFilms);
-        }
-
-        log.info("Возвращено {} популярных фильмов", popularFilms.size());
-        return ResponseEntity.ok(popularFilms);
+        return FilmMapper.mapToFilmDtoList(popularFilms);
     }
 }

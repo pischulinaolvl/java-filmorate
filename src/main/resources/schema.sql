@@ -47,7 +47,8 @@ CREATE TABLE "user" (
     email VARCHAR(255) NOT NULL UNIQUE,
     login VARCHAR(50) NOT NULL UNIQUE,
     name VARCHAR(100),
-    birthday DATE
+    birthday DATE,
+    CONSTRAINT uk_user_login UNIQUE (login)
 );
 
 -- Создаем таблицу дружбы (связующая таблица)

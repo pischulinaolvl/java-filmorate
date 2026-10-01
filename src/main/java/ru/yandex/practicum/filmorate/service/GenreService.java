@@ -2,49 +2,47 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dto.genre.GenreDto;
 import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.storage.film.GenreStorage;
+import ru.yandex.practicum.filmorate.repository.genre.GenreMapper;
+import ru.yandex.practicum.filmorate.repository.genre.GenreRepository;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class GenreService {
 
-    private final GenreStorage genreStorage;
+    private final GenreRepository genreRepository;
 
-    /**
-     * Получить жанр по ID.
-     */
-    public Genre getGenreById(Long id) {
-        return genreStorage.getGenreById(id);
+    public GenreDto getGenreById(Long id) {
+        Genre genre = genreRepository.getGenreById(id);
+        return GenreMapper.mapToGenreDto(genre);
     }
 
-    /**
-     * Получить все жанры.
-     */
-    public List<Genre> getAllGenres() {
-        return genreStorage.getAllGenres();
+    public List<GenreDto> getAllGenres() {
+        List<Genre> genres = genreRepository.getAllGenres();
+        return genres.stream()
+                .map(entry -> {return new GenreDto(entry.getId(), entry.getName());})
+                .collect(Collectors.toList());
     }
 
-    /**
-     * Создать новый жанр.
-     */
-    public Genre createGenre(Genre genre) {
-        return genreStorage.createGenre(genre);
+    public GenreDto createGenre(GenreDto genreDto) {
+        Genre genre = GenreMapper.mapToGenre(genreDto);
+
+        Genre savedGenre = genreRepository.createGenre(genre);
+
+        return GenreMapper.mapToGenreDto(savedGenre);
     }
 
-    /**
-     * Обновить существующий жанр.
-     */
-    public Genre updateGenre(Genre genre) {
-        return genreStorage.updateGenre(genre);
+    public GenreDto updateGenre(GenreDto genreDto) {
+        Genre genre = GenreMapper.mapToGenre(genreDto);
+        Genre updatedGenre = genreRepository.updateGenre(genre);
+        return GenreMapper.mapToGenreDto(updatedGenre);
     }
 
-    /**
-     * Удалить жанр.
-     */
     public void deleteGenre(Long id) {
-        genreStorage.deleteGenre(id);
+        genreRepository.deleteGenre(id);
     }
 }
