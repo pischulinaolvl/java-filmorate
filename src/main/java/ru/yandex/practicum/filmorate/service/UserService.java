@@ -30,7 +30,6 @@ public class UserService {
         this.friendRepository = friendRepository;
     }
 
-    // Старая реализация
     public void addFriend(Long userId, Long friendId, Logger log) {
         log.info("Пользователь id = {} хочет добавить друга с id = {}", userId, friendId);
         User user = userRepository.findUserById(userId);
@@ -92,7 +91,6 @@ public class UserService {
         return users;
     }
 
-    // Удаление пользователя из друзей
     public void removeFriend(Long userId, Long friendId, Logger log) {
         log.info("Пользователь id = {} хочет удалить друга с id = {}", userId, friendId);
         User user = userRepository.findUserById(userId);
@@ -108,11 +106,10 @@ public class UserService {
         } else if (friends.containsKey(friendId)) {
             friendRepository.removeFriendship(userId, friendId);
         } else {
-            return;//throw new NotFoundException("Пользователь или друг не найдены");
+            return;
         }
     }
 
-    // Получение списка общих друзей
     public List<UserDto>  getCommonFriends(Long userId1, Long userId2, Logger log) {
         log.info("Вывод общих друзей для пользователей id = {} и id = {}", userId1, userId2);
         User user1 = userRepository.findUserById(userId1);
@@ -138,7 +135,6 @@ public class UserService {
         return userRepository.getUsers().values();
     }
 
-    // Новая реализация с dto
     public User create(User user, Logger log) {
         log.info("Создание пользователя Name = {}", user.getName());
         return userRepository.createUser(user);
@@ -152,6 +148,7 @@ public class UserService {
     public User findUserById(Long id, Logger log) {
         return userRepository.findUserById(id);
     }
+
     public UserDto createUser(NewUserRequest request) {
         if (request.getEmail() == null || request.getEmail().isEmpty()) {
             throw new ConditionsNotMetException("Имейл должен быть указан");
