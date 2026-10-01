@@ -24,7 +24,9 @@ public class GenreService {
     public List<GenreDto> getAllGenres() {
         List<Genre> genres = genreRepository.getAllGenres();
         return genres.stream()
-                .map(entry -> {return new GenreDto(entry.getId(), entry.getName());})
+                .map(entry -> {
+                    return new GenreDto(entry.getId(), entry.getName());
+                })
                 .collect(Collectors.toList());
     }
 
