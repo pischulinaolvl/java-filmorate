@@ -81,7 +81,7 @@ public class FilmService {
         Map<Long, Film> filmsFromDb = filmRepository.getFilms();
 
         List<FilmDto> result = filmsFromDb.values().stream()
-                .map(film-> new FilmDto(film))
+                .map(film -> new FilmDto(film))
                 .collect(Collectors.toList());
 
         return result;
