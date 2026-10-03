@@ -89,7 +89,7 @@ public class InMemoryFilmRepository implements FilmRepository {
     }
 
     @Override
-    public List<Film> getPopularFilms(int count) {
+    public List<Film> getPopularFilms(int count, Long genreId, Integer year) {
         return null;
     }
 }
