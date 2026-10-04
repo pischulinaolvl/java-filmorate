@@ -76,6 +76,16 @@ public class FilmService {
         return filmRepository.getPopularFilms(count);
     }
 
+    public List<FilmDto> getCommonFilms(Long userId, Long friendId) {
+        if (userRepository.findUserById(userId) == null) {
+            throw new NotFoundException("Пользователь с ID " + userId + " не найден");
+        }
+        if (userRepository.findUserById(friendId) == null) {
+            throw new NotFoundException("Пользователь с ID " + friendId + " не найден");
+        }
+        return FilmMapper.mapToFilmDtoList(filmRepository.getCommonFilms(userId, friendId));
+    }
+
     public List<FilmDto> getFilms(Logger log) {
         log.info("Получение всех фильмов");
         Map<Long, Film> filmsFromDb = filmRepository.getFilms();

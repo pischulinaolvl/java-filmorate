@@ -16,4 +16,6 @@ public interface FilmRepository {
     Map<Long, Film> getFilms();
 
     List<Film> getPopularFilms(int count);
+
+    List<Film> getCommonFilms(Long userId, Long friendId);
 }
