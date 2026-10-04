@@ -247,9 +247,63 @@ public class JdbcFilmRepository implements FilmRepository {
                 (rs, rowNum) -> rs.getLong("id")
         );
 
+        if (filmIds.isEmpty()) {
+            return List.of();
+        }
+
+        String filmsSql = """
+            SELECT f.id, f.name, f.description, f.release_date, f.duration,
+                   m.id AS mpa_id, m.name AS mpa_name, m.description AS mpa_desc
+            FROM film f
+            JOIN mpaa_rating m ON f.mpaa_rating_id = m.id
+            WHERE f.id IN (:ids)
+            """;
+
+        MapSqlParameterSource idsParams = new MapSqlParameterSource("ids", filmIds);
+
+        Map<Long, Film> filmsById = new HashMap<>();
+        namedParameterJdbcTemplate.query(filmsSql, idsParams, rs -> {
+            Film film = new Film();
+            film.setId(rs.getLong("id"));
+            film.setName(rs.getString("name"));
+            film.setDescription(rs.getString("description"));
+            if (rs.getDate("release_date") != null) {
+                film.setReleaseDate(rs.getDate("release_date").toLocalDate());
+            }
+            film.setDuration(rs.getLong("duration"));
+
+            MpaaRating mpa = new MpaaRating();
+            mpa.setId(rs.getLong("mpa_id"));
+            mpa.setName(rs.getString("mpa_name"));
+            mpa.setDescription(rs.getString("mpa_desc"));
+            film.setMpa(mpa);
+
+            film.setGenres(new ArrayList<>());
+            filmsById.put(film.getId(), film);
+        });
+
+        String genresSql = """
+            SELECT fg.film_id, g.id, g.name
+            FROM film_genre fg
+            JOIN genre g ON g.id = fg.genre_id
+            WHERE fg.film_id IN (:ids)
+            ORDER BY g.id
+            """;
+
+        namedParameterJdbcTemplate.query(genresSql, idsParams, rs -> {
+            Long filmId = rs.getLong("film_id");
+            Film film = filmsById.get(filmId);
+            if (film != null) {
+                Genre genre = new Genre();
+                genre.setId(rs.getLong("id"));
+                genre.setName(rs.getString("name"));
+                film.getGenres().add(genre);
+            }
+        });
+
         // Загружаем полные объекты (с MPA и жанрами) в том же порядке
         return filmIds.stream()
-                .map(this::findFilmById)
+                .map(filmsById::get)
                 .filter(Objects::nonNull)
                 .toList();
     }
