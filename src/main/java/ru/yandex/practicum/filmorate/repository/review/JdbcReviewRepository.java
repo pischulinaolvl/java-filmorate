@@ -38,9 +38,9 @@ public class JdbcReviewRepository implements ReviewRepository {
     @Override
     public Review create(Review review) {
         String sql = """
-            INSERT INTO reviews (content, is_positive, user_id, film_id, useful)
-            VALUES (?, ?, ?, ?, 0)
-            """;
+                INSERT INTO reviews (content, is_positive, user_id, film_id, useful)
+                VALUES (?, ?, ?, ?, 0)
+                """;
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbc.update(con -> {
             PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
@@ -59,10 +59,10 @@ public class JdbcReviewRepository implements ReviewRepository {
     @Override
     public Review update(Review review) {
         String sql = """
-            UPDATE reviews
-            SET content = ?, is_positive = ?
-            WHERE id = ?
-            """;
+                UPDATE reviews
+                SET content = ?, is_positive = ?
+                WHERE id = ?
+                """;
         int updated = jdbc.update(sql,
                 review.getContent(),
                 review.getIsPositive(),
@@ -94,17 +94,17 @@ public class JdbcReviewRepository implements ReviewRepository {
     public List<Review> findAll(Long filmId, int count) {
         if (filmId != null) {
             return jdbc.query("""
-                SELECT * FROM reviews
-                WHERE film_id = ?
-                ORDER BY useful DESC, id ASC
-                LIMIT ?
-                """, mapper, filmId, count);
+                    SELECT * FROM reviews
+                    WHERE film_id = ?
+                    ORDER BY useful DESC, id ASC
+                    LIMIT ?
+                    """, mapper, filmId, count);
         }
         return jdbc.query("""
-            SELECT * FROM reviews
-            ORDER BY useful DESC, id ASC
-            LIMIT ?
-            """, mapper, count);
+                SELECT * FROM reviews
+                ORDER BY useful DESC, id ASC
+                LIMIT ?
+                """, mapper, count);
     }
 
     // ---- голоса ----
