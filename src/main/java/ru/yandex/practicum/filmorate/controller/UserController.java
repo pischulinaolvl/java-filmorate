@@ -9,6 +9,7 @@ import ru.yandex.practicum.filmorate.dto.user.FriendDto;
 import ru.yandex.practicum.filmorate.dto.user.NewUserRequest;
 import ru.yandex.practicum.filmorate.dto.user.UpdateUserRequest;
 import ru.yandex.practicum.filmorate.dto.user.UserDto;
+import ru.yandex.practicum.filmorate.dto.film.FilmDto;
 import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.util.*;
@@ -45,6 +46,14 @@ public class UserController {
     @ResponseStatus(HttpStatus.OK)
     public UserDto getUserById(@PathVariable("userId") long userId) {
         return userService.getUserById(userId);
+    }
+
+    // Рекомендуем фильмы пользователя с наибольшим числом общих лайков с текущим пользователем.
+    // В ответ попадают только фильмы, которые текущий пользователь ещё не лайкнул.
+    @GetMapping("/{id}/recommendations")
+    public List<FilmDto> getRecommendations(@PathVariable Long id) {
+        log.info("Запрос рекомендаций для пользователя {}", id);
+        return userService.getRecommendations(id);
     }
 
     @PutMapping("/{id}/friends/{friendId}")
