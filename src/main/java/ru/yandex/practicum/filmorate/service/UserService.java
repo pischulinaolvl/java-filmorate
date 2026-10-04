@@ -175,6 +175,12 @@ public class UserService {
         return UserMapper.mapToUserDto(user);
     }
 
+    public void removeUser(long userId) {
+        if (userRepository.removeUser(userId) == 0) {
+            throw new NotFoundException("Пользователь не найден с ID: " + userId);
+        }
+    }
+
     public List<UserDto> getUsers() {
         return userRepository.findAll()
                 .stream()
