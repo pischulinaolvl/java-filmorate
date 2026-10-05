@@ -41,9 +41,9 @@ public class JdbcFilmRepository implements FilmRepository {
         if (film.getDescription().length() > 100) {
             throw new ConditionsNotMetException("Описание фильма слишком длинное");
         }
-        if (film.getReleaseDate() == null || film.getReleaseDate().isAfter(LocalDate.now())) {
+        /*if (film.getReleaseDate() == null || film.getReleaseDate().isAfter(LocalDate.now())) {
             throw new ConditionsNotMetException("Дата выхода не может быть в будущем");
-        }
+        }*/
         if (film.getDuration() == null || film.getDuration() <= 0) {
             throw new ConditionsNotMetException("Длительность должна быть положительной");
         }
@@ -100,6 +100,30 @@ public class JdbcFilmRepository implements FilmRepository {
             }
         }
 
+        if (film.getDirectors() != null && !film.getDirectors().isEmpty()) {
+            String insertGenreLinkSql = "INSERT INTO film_director (film_id, director_id) VALUES (?, ?)";
+            Set<Long> processedDirectorIds = new HashSet<>();
+
+            for (Director director : film.getDirectors()) {
+                if (director == null || director.getId() == null || !processedDirectorIds.add(director.getId())) {
+                    continue;
+                }
+
+                Long directorId = director.getId();
+
+                try {
+                    int rowsAffected = jdbcTemplate.update(insertGenreLinkSql, newFilmId, directorId);
+                } catch (org.springframework.dao.DataIntegrityViolationException e) {
+                    throw new NotFoundException(
+                            "Не удалось связать фильм с режиссёром ID: " + directorId +
+                                    ". Возможно, жанр отсутствует в базе данных. Проверьте data.sql."
+                    );
+                } catch (Exception e) {
+                    throw new RuntimeException("Ошибка при сохранении связи фильм-режиссёр: " + e.getMessage(), e);
+                }
+            }
+        }
+
         return film;
     }
 
@@ -114,9 +138,9 @@ public class JdbcFilmRepository implements FilmRepository {
         if (film.getDescription() != null && film.getDescription().length() > 100) {
             throw new ConditionsNotMetException("Описание фильма слишком длинное");
         }
-        if (film.getReleaseDate() == null || film.getReleaseDate().isAfter(LocalDate.now())) {
+        /*if (film.getReleaseDate() == null || film.getReleaseDate().isAfter(LocalDate.now())) {
             throw new ConditionsNotMetException("Дата выхода не может быть в будущем");
-        }
+        }*/
         if (film.getDuration() == null || film.getDuration() <= 0) {
             throw new ConditionsNotMetException("Длительность должна быть положительной");
         }
@@ -150,6 +174,24 @@ public class JdbcFilmRepository implements FilmRepository {
                     } catch (org.springframework.dao.DataIntegrityViolationException e) {
                         throw new NotFoundException(
                                 "Не удалось обновить фильм: жанр с ID " + genre.getId() + " не найден."
+                        );
+                    }
+                }
+            }
+        }
+
+        deleteLinksSql = "DELETE FROM film_director WHERE film_id = ?";
+        jdbcTemplate.update(deleteLinksSql, film.getId());
+
+        if (film.getDirectors() != null && !film.getDirectors().isEmpty()) {
+            String insertGenreLinkSql = "INSERT INTO film_director (film_id, director_id) VALUES (?, ?)";
+            for (Director director : film.getDirectors()) {
+                if (director != null && director.getId() != null) {
+                    try {
+                        jdbcTemplate.update(insertGenreLinkSql, film.getId(), director.getId());
+                    } catch (org.springframework.dao.DataIntegrityViolationException e) {
+                        throw new NotFoundException(
+                                "Не удалось обновить фильм: жанр с ID " + director.getId() + " не найден."
                         );
                     }
                 }

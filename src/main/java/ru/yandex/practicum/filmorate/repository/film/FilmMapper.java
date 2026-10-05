@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.repository.film;
 
 import ru.yandex.practicum.filmorate.dto.film.FilmDto;
 import ru.yandex.practicum.filmorate.dto.film.NewFilmRequest;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.repository.genre.GenreMapper;
 import ru.yandex.practicum.filmorate.repository.mpa.MpaMapper;
@@ -33,6 +34,20 @@ public class FilmMapper {
             dto.setGenres(
                     film.getGenres().stream()
                             .map(GenreMapper::mapToGenreDto)
+                            .collect(Collectors.toList())
+            );
+        } else {
+            dto.setGenres(List.of());
+        }
+
+        if (film.getDirectors() != null) {
+            dto.setDirectors(
+                    film.getDirectors().stream()
+                            .map(oldDir -> {
+                                Director newDir = new Director();
+                                newDir.setId(oldDir.getId());      // Копируем ID
+                                newDir.setName(oldDir.getName());  // Копируем Имя
+                                return newDir;})
                             .collect(Collectors.toList())
             );
         } else {
@@ -78,6 +93,21 @@ public class FilmMapper {
         } else {
             film.setGenres(List.of());
         }
+
+        if (request.getDirectors() != null) {
+            film.setDirectors(
+                    request.getDirectors().stream()
+                            .map(oldDir -> {
+                                Director newDir = new Director();
+                                newDir.setId(oldDir.getId());      // Копируем ID
+                                newDir.setName(oldDir.getName());  // Копируем Имя
+                                return newDir;})
+                            .collect(Collectors.toList())
+            );
+        } else {
+            film.setDirectors(List.of());
+        }
+
         return film;
     }
 
