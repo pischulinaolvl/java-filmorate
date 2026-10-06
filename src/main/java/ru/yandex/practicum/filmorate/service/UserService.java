@@ -43,10 +43,8 @@ public class UserService {
         if (userRepository.findUserById(userId) == null) {
             throw new NotFoundException("Пользователь не найден с ID: " + userId);
         }
-        return likeRepository.getRecommendationFilmIds(userId).stream()
-                .map(filmRepository::findFilmById)
-                .map(FilmMapper::mapToFilmDto)
-                .toList();
+        List<Long> filmIds = likeRepository.getRecommendationFilmIds(userId);
+        return FilmMapper.mapToFilmDtoList(filmRepository.getFilmsByIds(filmIds));
     }
 
     public void addFriend(Long userId, Long friendId, Logger log) {

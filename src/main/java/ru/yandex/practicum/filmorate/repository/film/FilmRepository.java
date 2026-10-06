@@ -13,6 +13,8 @@ public interface FilmRepository {
 
     Film findFilmById(Long id);
 
+    List<Film> getFilmsByIds(List<Long> filmIds);
+
     Map<Long, Film> getFilms();
 
     List<Film> getPopularFilms(int count, Long genreId, Integer year);
