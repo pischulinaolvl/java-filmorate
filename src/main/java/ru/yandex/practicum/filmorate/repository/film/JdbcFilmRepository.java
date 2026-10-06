@@ -301,4 +301,19 @@ public class JdbcFilmRepository implements FilmRepository {
                 .filter(Objects::nonNull)
                 .toList();
     }
+
+    @Override
+    public List<Film> getCommonFilms(Long userId, Long friendId) {
+        String sql = """
+                SELECT l1.film_id
+                FROM likes l1
+                JOIN likes l2 ON l1.film_id = l2.film_id
+                WHERE l1.user_id = ? AND l2.user_id = ?
+                ORDER BY (SELECT COUNT(*) FROM likes WHERE film_id = l1.film_id) DESC, l1.film_id ASC
+                """;
+
+        return jdbcTemplate.queryForList(sql, Long.class, userId, friendId).stream()
+                .map(this::findFilmById)
+                .toList();
+    }
 }

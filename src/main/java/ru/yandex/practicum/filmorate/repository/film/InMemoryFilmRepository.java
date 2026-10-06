@@ -92,4 +92,9 @@ public class InMemoryFilmRepository implements FilmRepository {
     public List<Film> getPopularFilms(int count, Long genreId, Integer year) {
         return null;
     }
+
+    @Override
+    public List<Film> getCommonFilms(Long userId, Long friendId) {
+        throw new UnsupportedOperationException("Лайки хранятся только в базе данных");
+    }
 }

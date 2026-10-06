@@ -84,4 +84,10 @@ public class FilmController {
         List<Film> popularFilms = filmService.getPopularFilms(count, genreId, year, log);
         return FilmMapper.mapToFilmDtoList(popularFilms);
     }
+
+    @GetMapping("/common")
+    public List<FilmDto> getCommonFilms(@RequestParam Long userId, @RequestParam Long friendId) {
+        log.info("Запрос общих фильмов пользователей {} и {}", userId, friendId);
+        return filmService.getCommonFilms(userId, friendId);
+    }
 }
