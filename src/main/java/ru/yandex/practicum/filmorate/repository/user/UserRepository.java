@@ -8,7 +8,7 @@ import java.util.Map;
 public interface UserRepository {
     User createUser(User user);
 
-    void removeUser(Long id);
+    int removeUser(Long id);
 
     User updateUser(User user);
 

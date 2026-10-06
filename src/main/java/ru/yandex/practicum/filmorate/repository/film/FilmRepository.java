@@ -7,7 +7,7 @@ import java.util.Map;
 public interface FilmRepository {
     Film createFilm(Film film);
 
-    void removeFilm(Long id);
+    int removeFilm(Long id);
 
     Film updateFilm(Film film);
 
@@ -15,5 +15,7 @@ public interface FilmRepository {
 
     Map<Long, Film> getFilms();
 
-    List<Film> getPopularFilms(int count);
+    List<Film> getPopularFilms(int count, Long genreId, Integer year);
+
+    List<Film> getCommonFilms(Long userId, Long friendId);
 }

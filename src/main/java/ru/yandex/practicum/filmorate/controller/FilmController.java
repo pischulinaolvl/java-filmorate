@@ -40,6 +40,13 @@ public class FilmController {
         return filmService.getFilmById(id);
     }
 
+    @DeleteMapping("/{filmId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeFilm(@PathVariable Long filmId) {
+        log.info("Удаление фильма с ID: {}", filmId);
+        filmService.removeFilm(filmId);
+    }
+
     @PostMapping
     @ResponseStatus(org.springframework.http.HttpStatus.CREATED)
     public FilmDto create(@RequestBody NewFilmRequest filmRequest) {
@@ -69,10 +76,18 @@ public class FilmController {
 
     @GetMapping("/popular")
     public List<FilmDto> getPopularFilms(
-            @RequestParam(defaultValue = "10") Integer count) {
-        log.info("Запрос популярных фильмов, count={}", count);
+            @RequestParam(defaultValue = "10") Integer count,
+            @RequestParam(required = false) Long genreId,
+            @RequestParam(required = false) Integer year) {
+        log.info("Запрос популярных фильмов, count={},genreId={}, year={}", count, genreId, year);
 
-        List<Film> popularFilms = filmService.getPopularFilms(count, log);
+        List<Film> popularFilms = filmService.getPopularFilms(count, genreId, year, log);
         return FilmMapper.mapToFilmDtoList(popularFilms);
+    }
+
+    @GetMapping("/common")
+    public List<FilmDto> getCommonFilms(@RequestParam Long userId, @RequestParam Long friendId) {
+        log.info("Запрос общих фильмов пользователей {} и {}", userId, friendId);
+        return filmService.getCommonFilms(userId, friendId);
     }
 }

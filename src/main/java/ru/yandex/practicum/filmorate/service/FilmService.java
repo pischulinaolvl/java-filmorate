@@ -12,6 +12,7 @@ import ru.yandex.practicum.filmorate.model.MpaaRating;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.repository.film.FilmMapper;
 import ru.yandex.practicum.filmorate.repository.film.FilmRepository;
+import ru.yandex.practicum.filmorate.repository.genre.GenreRepository;
 import ru.yandex.practicum.filmorate.repository.mpa.MpaRepository;
 import ru.yandex.practicum.filmorate.repository.like.LikeRepository;
 import ru.yandex.practicum.filmorate.repository.user.UserRepository;
@@ -25,13 +26,19 @@ public class FilmService {
     private final UserRepository userRepository;
     private final MpaRepository mpaRepository;
     private final LikeRepository likeRepository;
+    private final GenreRepository genreRepository;
 
     @Autowired
-    public FilmService(@Qualifier("FilmDbStorage") FilmRepository filmRepository, @Qualifier("UserDbStorage") UserRepository userRepository, MpaRepository mpaRepository, LikeRepository likeRepository) {
+    public FilmService(@Qualifier("FilmDbStorage") FilmRepository filmRepository,
+                       @Qualifier("UserDbStorage") UserRepository userRepository,
+                       MpaRepository mpaRepository,
+                       LikeRepository likeRepository,
+                       GenreRepository genreRepository) {
         this.filmRepository = filmRepository;
         this.userRepository = userRepository;
         this.mpaRepository = mpaRepository;
         this.likeRepository = likeRepository;
+        this.genreRepository = genreRepository;
     }
 
     public String addLike(Long filmId, Long userId, Logger log) {
@@ -71,9 +78,23 @@ public class FilmService {
         log.info("Лайк успешно удален: фильм={}, пользователь={}", filmId, userId);
     }
 
-    public List<Film> getPopularFilms(int count, Logger log) {
-        log.info("Получение популярных фильмов count = {}", count);
-        return filmRepository.getPopularFilms(count);
+    public List<Film> getPopularFilms(int count, Long genreId, Integer year, Logger log) {
+        log.info("Получение популярных фильмов count={}, genreId={}, year={}", count, genreId, year);
+
+        if (genreId != null) {
+            genreRepository.getGenreById(genreId); // бросит NotFoundException, если нет
+        }
+        return filmRepository.getPopularFilms(count, genreId, year);
+    }
+
+    public List<FilmDto> getCommonFilms(Long userId, Long friendId) {
+        if (userRepository.findUserById(userId) == null) {
+            throw new NotFoundException("Пользователь с ID " + userId + " не найден");
+        }
+        if (userRepository.findUserById(friendId) == null) {
+            throw new NotFoundException("Пользователь с ID " + friendId + " не найден");
+        }
+        return FilmMapper.mapToFilmDtoList(filmRepository.getCommonFilms(userId, friendId));
     }
 
     public List<FilmDto> getFilms(Logger log) {
@@ -117,5 +138,11 @@ public class FilmService {
         }
 
         return FilmMapper.mapToFilmDto(film);
+    }
+
+    public void removeFilm(Long filmId) {
+        if (filmRepository.removeFilm(filmId) == 0) {
+            throw new NotFoundException("Фильм с ID " + filmId + " не найден");
+        }
     }
 }
