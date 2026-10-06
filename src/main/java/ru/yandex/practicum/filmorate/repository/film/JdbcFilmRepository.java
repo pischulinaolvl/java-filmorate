@@ -247,9 +247,18 @@ public class JdbcFilmRepository implements FilmRepository {
                 (rs, rowNum) -> rs.getLong("id")
         );
 
-        if (filmIds.isEmpty()) {
+        return loadFilmsByIds(filmIds);
+    }
+
+    /**
+     * Загружает полные Film (MPA + жанры) для списка id.
+     */
+    private List<Film> loadFilmsByIds(List<Long> filmIds) {
+        if (filmIds == null || filmIds.isEmpty()) {
             return List.of();
         }
+
+        MapSqlParameterSource idsParams = new MapSqlParameterSource("ids", filmIds);
 
         String filmsSql = """
             SELECT f.id, f.name, f.description, f.release_date, f.duration,
@@ -259,28 +268,14 @@ public class JdbcFilmRepository implements FilmRepository {
             WHERE f.id IN (:ids)
             """;
 
-        MapSqlParameterSource idsParams = new MapSqlParameterSource("ids", filmIds);
+        List<Film> loadedFilms = namedParameterJdbcTemplate.query(
+                filmsSql, idsParams, new FilmWithMpaRowMapper());
 
         Map<Long, Film> filmsById = new HashMap<>();
-        namedParameterJdbcTemplate.query(filmsSql, idsParams, rs -> {
-            Film film = new Film();
-            film.setId(rs.getLong("id"));
-            film.setName(rs.getString("name"));
-            film.setDescription(rs.getString("description"));
-            if (rs.getDate("release_date") != null) {
-                film.setReleaseDate(rs.getDate("release_date").toLocalDate());
-            }
-            film.setDuration(rs.getLong("duration"));
-
-            MpaaRating mpa = new MpaaRating();
-            mpa.setId(rs.getLong("mpa_id"));
-            mpa.setName(rs.getString("mpa_name"));
-            mpa.setDescription(rs.getString("mpa_desc"));
-            film.setMpa(mpa);
-
+        for (Film film : loadedFilms) {
             film.setGenres(new ArrayList<>());
             filmsById.put(film.getId(), film);
-        });
+        }
 
         String genresSql = """
             SELECT fg.film_id, g.id, g.name
@@ -301,7 +296,6 @@ public class JdbcFilmRepository implements FilmRepository {
             }
         });
 
-        // Загружаем полные объекты (с MPA и жанрами) в том же порядке
         return filmIds.stream()
                 .map(filmsById::get)
                 .filter(Objects::nonNull)
