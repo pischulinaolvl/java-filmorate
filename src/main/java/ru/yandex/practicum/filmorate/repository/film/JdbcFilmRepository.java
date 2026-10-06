@@ -14,10 +14,7 @@ import ru.yandex.practicum.filmorate.repository.mappers.FilmRowMapper;
 import ru.yandex.practicum.filmorate.repository.mappers.FilmWithMpaRowMapper;
 
 import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Component("FilmDbStorage")
@@ -212,28 +209,96 @@ public class JdbcFilmRepository implements FilmRepository {
     }
 
     @Override
-    public List<Film> getPopularFilms(int count) {
-        String sql = """
-        SELECT f.id, f.name, f.description, f.release_date, f.duration, f.mpaa_rating_id,
-               COUNT(l.film_id) AS likes_count
+    public List<Film> getPopularFilms(int count, Long genreId, Integer year) {
+        StringBuilder sql = new StringBuilder("""
+        SELECT f.id
         FROM film f
         LEFT JOIN likes l ON f.id = l.film_id
-        GROUP BY f.id, f.name, f.description, f.release_date, f.duration, f.mpaa_rating_id
-        ORDER BY likes_count DESC, f.release_date DESC
-        LIMIT ?
-    """;
+        WHERE 1=1
+        """);
 
-        return jdbcTemplate.query(sql, (rs, rowNum) -> {
-            Film film = new Film();
-            film.setId(rs.getLong("id"));
-            film.setName(rs.getString("name"));
-            film.setDescription(rs.getString("description"));
-            film.setReleaseDate(rs.getDate("release_date").toLocalDate());
-            film.setDuration(rs.getLong("duration"));
-            film.setMpa(new MpaaRating()); // Заглушка, если нужно, или потом дозагрузить
-            film.getMpa().setId(rs.getLong("mpaa_rating_id"));
+        MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("count", count);
 
-            return film;
-        }, count);
+        if (year != null) {
+            sql.append(" AND EXTRACT(YEAR FROM f.release_date) = :year");
+            params.addValue("year", year);
+        }
+
+        if (genreId != null) {
+            sql.append("""
+             AND EXISTS (
+                SELECT 1 FROM film_genre fg
+                WHERE fg.film_id = f.id AND fg.genre_id = :genreId
+             )
+            """);
+            params.addValue("genreId", genreId);
+        }
+
+        sql.append("""
+         GROUP BY f.id
+         ORDER BY COUNT(l.user_id) DESC, f.id ASC
+         LIMIT :count
+        """);
+
+        List<Long> filmIds = namedParameterJdbcTemplate.query(
+                sql.toString(),
+                params,
+                (rs, rowNum) -> rs.getLong("id")
+        );
+
+        return loadFilmsByIds(filmIds);
+    }
+
+    /**
+     * Загружает полные Film (MPA + жанры) для списка id.
+     */
+    private List<Film> loadFilmsByIds(List<Long> filmIds) {
+        if (filmIds == null || filmIds.isEmpty()) {
+            return List.of();
+        }
+
+        MapSqlParameterSource idsParams = new MapSqlParameterSource("ids", filmIds);
+
+        String filmsSql = """
+            SELECT f.id, f.name, f.description, f.release_date, f.duration,
+                   m.id AS mpa_id, m.name AS mpa_name, m.description AS mpa_desc
+            FROM film f
+            JOIN mpaa_rating m ON f.mpaa_rating_id = m.id
+            WHERE f.id IN (:ids)
+            """;
+
+        List<Film> loadedFilms = namedParameterJdbcTemplate.query(
+                filmsSql, idsParams, new FilmWithMpaRowMapper());
+
+        Map<Long, Film> filmsById = new HashMap<>();
+        for (Film film : loadedFilms) {
+            film.setGenres(new ArrayList<>());
+            filmsById.put(film.getId(), film);
+        }
+
+        String genresSql = """
+            SELECT fg.film_id, g.id, g.name
+            FROM film_genre fg
+            JOIN genre g ON g.id = fg.genre_id
+            WHERE fg.film_id IN (:ids)
+            ORDER BY g.id
+            """;
+
+        namedParameterJdbcTemplate.query(genresSql, idsParams, rs -> {
+            Long filmId = rs.getLong("film_id");
+            Film film = filmsById.get(filmId);
+            if (film != null) {
+                Genre genre = new Genre();
+                genre.setId(rs.getLong("id"));
+                genre.setName(rs.getString("name"));
+                film.getGenres().add(genre);
+            }
+        });
+
+        return filmIds.stream()
+                .map(filmsById::get)
+                .filter(Objects::nonNull)
+                .toList();
     }
 }
