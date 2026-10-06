@@ -51,7 +51,7 @@ public class FilmMapper {
                             .collect(Collectors.toList())
             );
         } else {
-            dto.setGenres(List.of());
+            dto.setDirectors(List.of());
         }
 
         return dto;
@@ -139,6 +139,21 @@ public class FilmMapper {
         } else {
             film.setGenres(List.of());
         }
+
+        if (filmDto.getDirectors() != null) {
+            film.setDirectors(
+                    filmDto.getDirectors().stream()
+                            .map(oldDir -> {
+                                Director newDir = new Director();
+                                newDir.setId(oldDir.getId());      // Копируем ID
+                                newDir.setName(oldDir.getName());  // Копируем Имя
+                                return newDir;})
+                            .collect(Collectors.toList())
+            );
+        } else {
+            film.setDirectors(List.of());
+        }
+
         return film;
     }
 

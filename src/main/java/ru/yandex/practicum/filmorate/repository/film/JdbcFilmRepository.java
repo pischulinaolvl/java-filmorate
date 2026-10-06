@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.*;
+import ru.yandex.practicum.filmorate.repository.mappers.DirectorRowMapper;
 import ru.yandex.practicum.filmorate.repository.mappers.FilmRowMapper;
 import ru.yandex.practicum.filmorate.repository.mappers.FilmWithMpaRowMapper;
 
@@ -226,6 +227,12 @@ public class JdbcFilmRepository implements FilmRepository {
 
             film.setGenres(genres);
 
+            String directorSql = "SELECT d.* FROM director d JOIN film_director fd ON d.id = fd.director_id WHERE fd.film_id = ?";
+
+            List<Director> directors = jdbcTemplate.query(directorSql, new DirectorRowMapper(), id);
+
+            film.setDirectors(directors);
+
             return film;
         } catch (EmptyResultDataAccessException e) {
             return null;
@@ -355,6 +362,33 @@ public class JdbcFilmRepository implements FilmRepository {
                 """;
 
         return jdbcTemplate.queryForList(sql, Long.class, userId, friendId).stream()
+                .map(this::findFilmById)
+                .toList();
+    }
+
+    @Override
+    public List<Film> getFilmsByDirector(Long directorId, String sortBy) {
+        StringBuilder sql = new StringBuilder("""
+        SELECT f.id
+        FROM film f
+        JOIN film_director fd ON fd.film_id = f.id
+                             and fd.director_id = :directorId
+    """);
+
+        MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("directorId", directorId);
+
+        if ("likes".equals(sortBy)) {
+            sql.append("""
+            LEFT JOIN likes l ON f.id = l.film_id
+            GROUP BY f.id
+            ORDER BY COUNT(l.user_id) DESC, f.id ASC
+        """);
+        } else if ("year".equals(sortBy)) {
+            sql.append(" ORDER BY f.release_date, f.id ASC");
+        }
+
+        return namedParameterJdbcTemplate.queryForList(sql.toString(), params, Long.class).stream()
                 .map(this::findFilmById)
                 .toList();
     }
