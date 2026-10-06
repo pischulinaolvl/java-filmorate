@@ -48,7 +48,7 @@ public class UserController {
         return userService.getUserById(userId);
     }
 
-    // Рекомендуем фильмы пользователя с наибольшим числом общих лайков с текущим пользователем.
+    // Рекомендуем фильмы всех пользователей с максимальным числом общих лайков с текущим пользователем.
     // В ответ попадают только фильмы, которые текущий пользователь ещё не лайкнул.
     @GetMapping("/{id}/recommendations")
     public List<FilmDto> getRecommendations(@PathVariable Long id) {

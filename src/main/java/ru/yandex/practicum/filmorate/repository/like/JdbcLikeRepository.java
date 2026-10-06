@@ -67,36 +67,28 @@ public class JdbcLikeRepository implements LikeRepository {
 
     @Override
     public List<Long> getRecommendationFilmIds(Long userId) {
-        // Каждый общий лайк даёт одну строку после соединения own и other. Группировка
-        // считает число совпадений для каждого другого пользователя; первым выбираем того,
-        // у кого их больше всего. Если совпадений поровну, выбираем меньший ID пользователя.
-        // Когда общих лайков нет ни с кем, похожего пользователя нет и список будет пустым.
-        String similarUserSql = """
-                SELECT other.user_id
-                FROM likes own
-                JOIN likes other ON own.film_id = other.film_id
-                WHERE own.user_id = ? AND other.user_id <> ?
-                GROUP BY other.user_id
-                ORDER BY COUNT(*) DESC, other.user_id ASC
-                LIMIT 1
-                """;
-        List<Long> similarUsers = jdbcTemplate.queryForList(similarUserSql, Long.class, userId, userId);
-        if (similarUsers.isEmpty()) {
-            return List.of();
-        }
-
-        // Берём фильмы, лайкнутые выбранным пользователем, и исключаем те, которым
-        // исходный пользователь уже поставил лайк: повторно рекомендовать их не нужно.
+        // Для каждого другого пользователя считаем число фильмов, лайкнутых им и текущим
+        // пользователем. Берём всех с максимальным числом совпадений: при равенстве никто
+        // не теряется. Их фильмы объединяем без повторов и исключаем уже лайкнутые текущим
+        // пользователем. Если общих лайков ни с кем нет, запрос вернёт пустой список.
         String recommendationsSql = """
-                SELECT liked.film_id
+                WITH similarities AS (
+                    SELECT other.user_id, COUNT(*) AS common_likes
+                    FROM likes own
+                    JOIN likes other ON own.film_id = other.film_id
+                    WHERE own.user_id = ? AND other.user_id <> ?
+                    GROUP BY other.user_id
+                )
+                SELECT DISTINCT liked.film_id
                 FROM likes liked
-                WHERE liked.user_id = ?
+                JOIN similarities similar ON liked.user_id = similar.user_id
+                WHERE similar.common_likes = (SELECT MAX(common_likes) FROM similarities)
                   AND NOT EXISTS (
                       SELECT 1 FROM likes own
                       WHERE own.user_id = ? AND own.film_id = liked.film_id
                   )
                 ORDER BY liked.film_id
                 """;
-        return jdbcTemplate.queryForList(recommendationsSql, Long.class, similarUsers.get(0), userId);
+        return jdbcTemplate.queryForList(recommendationsSql, Long.class, userId, userId, userId);
     }
 }
