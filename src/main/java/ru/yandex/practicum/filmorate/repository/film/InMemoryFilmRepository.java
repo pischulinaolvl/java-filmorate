@@ -42,8 +42,8 @@ public class InMemoryFilmRepository implements FilmRepository {
     }
 
     @Override
-    public void removeFilm(Long id) {
-        films.remove(id);
+    public int removeFilm(Long id) {
+        return films.remove(id) == null ? 0 : 1;
     }
 
     @Override

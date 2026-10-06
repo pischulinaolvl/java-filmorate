@@ -128,4 +128,10 @@ public class FilmService {
 
         return FilmMapper.mapToFilmDto(film);
     }
+
+    public void removeFilm(Long filmId) {
+        if (filmRepository.removeFilm(filmId) == 0) {
+            throw new NotFoundException("Фильм с ID " + filmId + " не найден");
+        }
+    }
 }

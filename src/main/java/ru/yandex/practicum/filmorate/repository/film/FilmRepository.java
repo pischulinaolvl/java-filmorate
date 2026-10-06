@@ -7,7 +7,7 @@ import java.util.Map;
 public interface FilmRepository {
     Film createFilm(Film film);
 
-    void removeFilm(Long id);
+    int removeFilm(Long id);
 
     Film updateFilm(Film film);
 

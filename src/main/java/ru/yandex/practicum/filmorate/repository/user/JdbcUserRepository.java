@@ -109,10 +109,9 @@ public class JdbcUserRepository implements UserRepository {
     }
 
     @Override
-    public void removeUser(Long id) {
+    public int removeUser(Long id) {
         String sql = "DELETE FROM \"user\" WHERE id = ?";
-
-        int rowsAffected = jdbcTemplate.update(sql, id);
+        return jdbcTemplate.update(sql, id);
     }
 
     public List<User> findAll() {

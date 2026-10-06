@@ -40,6 +40,13 @@ public class FilmController {
         return filmService.getFilmById(id);
     }
 
+    @DeleteMapping("/{filmId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeFilm(@PathVariable Long filmId) {
+        log.info("Удаление фильма с ID: {}", filmId);
+        filmService.removeFilm(filmId);
+    }
+
     @PostMapping
     @ResponseStatus(org.springframework.http.HttpStatus.CREATED)
     public FilmDto create(@RequestBody NewFilmRequest filmRequest) {
