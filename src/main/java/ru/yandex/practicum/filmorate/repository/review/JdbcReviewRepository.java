@@ -156,14 +156,14 @@ public class JdbcReviewRepository implements ReviewRepository {
     private void removeVote(Long reviewId, Long userId, boolean expectedLike) {
         findById(reviewId);
         Boolean previous = getExistingVote(reviewId, userId);
-        if (previous == null) {
+        if (previous == null || previous != expectedLike) {
             return;
         }
         int deleted = jdbc.update(
-                "DELETE FROM review_likes WHERE review_id = ? AND user_id = ?",
-                reviewId, userId);
+                "DELETE FROM review_likes WHERE review_id = ? AND user_id = ? AND is_like = ?",
+                reviewId, userId, expectedLike);
         if (deleted > 0) {
-            changeUseful(reviewId, previous ? -1 : 1);
+            changeUseful(reviewId, expectedLike ? -1 : 1);
         }
     }
 
