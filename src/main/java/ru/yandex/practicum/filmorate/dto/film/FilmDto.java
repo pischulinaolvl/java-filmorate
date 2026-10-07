@@ -46,10 +46,11 @@ public class FilmDto {
         if (film.getDirectors() != null) {
             this.directors = film.getDirectors().stream()
                     .map(oldDir -> {
-                            Director newDir = new Director();
-                            newDir.setId(oldDir.getId());      // Копируем ID
-                            newDir.setName(oldDir.getName());  // Копируем Имя
-                            return newDir;})
+                        Director newDir = new Director();
+                        newDir.setId(oldDir.getId());      // Копируем ID
+                        newDir.setName(oldDir.getName());  // Копируем Имя
+                        return newDir;
+                    })
                     .collect(Collectors.toList());
         }
     }
