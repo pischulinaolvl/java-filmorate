@@ -49,8 +49,7 @@ public class FilmDto {
                         Director newDir = new Director();
                         newDir.setId(oldDir.getId());      // Копируем ID
                         newDir.setName(oldDir.getName());  // Копируем Имя
-                        return newDir;
-                    })
+                        return newDir; })
                     .collect(Collectors.toList());
         }
     }
