@@ -84,6 +84,17 @@ public class InMemoryFilmRepository implements FilmRepository {
     }
 
     @Override
+    public List<Film> getFilmsByIds(List<Long> filmIds) {
+        if (filmIds == null || filmIds.isEmpty()) {
+            return List.of();
+        }
+        return filmIds.stream()
+                .map(films::get)
+                .filter(java.util.Objects::nonNull)
+                .toList();
+    }
+
+    @Override
     public Map<Long, Film> getFilms() {
         return films;
     }
