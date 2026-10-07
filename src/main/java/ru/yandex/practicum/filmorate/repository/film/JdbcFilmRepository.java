@@ -299,6 +299,11 @@ public class JdbcFilmRepository implements FilmRepository {
         return loadFilmsByIds(filmIds);
     }
 
+    @Override
+    public List<Film> getFilmsByIds(List<Long> filmIds) {
+        return loadFilmsByIds(filmIds);
+    }
+
     private List<Film> loadFilmsByIds(List<Long> filmIds) {
         if (filmIds == null || filmIds.isEmpty()) {
             return List.of();

@@ -8,10 +8,14 @@ import ru.yandex.practicum.filmorate.dto.user.FriendDto;
 import ru.yandex.practicum.filmorate.dto.user.NewUserRequest;
 import ru.yandex.practicum.filmorate.dto.user.UpdateUserRequest;
 import ru.yandex.practicum.filmorate.dto.user.UserDto;
+import ru.yandex.practicum.filmorate.dto.film.FilmDto;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.repository.friend.FriendRepository;
+import ru.yandex.practicum.filmorate.repository.film.FilmMapper;
+import ru.yandex.practicum.filmorate.repository.film.FilmRepository;
+import ru.yandex.practicum.filmorate.repository.like.LikeRepository;
 import ru.yandex.practicum.filmorate.repository.user.UserMapper;
 import ru.yandex.practicum.filmorate.repository.user.UserRepository;
 
@@ -23,11 +27,24 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final FriendRepository friendRepository;
+    private final FilmRepository filmRepository;
+    private final LikeRepository likeRepository;
 
     @Autowired
-    public UserService(@Qualifier("UserDbStorage") UserRepository userRepository, FriendRepository friendRepository) {
+    public UserService(@Qualifier("UserDbStorage") UserRepository userRepository, FriendRepository friendRepository,
+                       @Qualifier("FilmDbStorage") FilmRepository filmRepository, LikeRepository likeRepository) {
         this.userRepository = userRepository;
         this.friendRepository = friendRepository;
+        this.filmRepository = filmRepository;
+        this.likeRepository = likeRepository;
+    }
+
+    public List<FilmDto> getRecommendations(Long userId) {
+        if (userRepository.findUserById(userId) == null) {
+            throw new NotFoundException("Пользователь не найден с ID: " + userId);
+        }
+        List<Long> filmIds = likeRepository.getRecommendationFilmIds(userId);
+        return FilmMapper.mapToFilmDtoList(filmRepository.getFilmsByIds(filmIds));
     }
 
     public void addFriend(Long userId, Long friendId, Logger log) {
