@@ -3,6 +3,8 @@ package ru.yandex.practicum.filmorate.repository.director;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
@@ -28,19 +30,23 @@ public class JdbcDirectorRepository implements DirectorRepository {
             throw new ConditionsNotMetException("Название режиссёра обязательно");
         }
 
+        KeyHolder keyHolder = new GeneratedKeyHolder();
         String sql = "INSERT INTO director (name) VALUES (:name)";
 
         MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("name", director.getName());
 
-        namedParameterJdbcTemplate.update(sql, params);
+        namedParameterJdbcTemplate.update(sql, params, keyHolder);
 
-        String selectSql = "SELECT * FROM director WHERE name = :name";
-        try {
-            return namedParameterJdbcTemplate.queryForObject(selectSql, params, new DirectorRowMapper());
-        } catch (org.springframework.dao.EmptyResultDataAccessException e) {
-            throw new NotFoundException("Не удалось получить созданного режиссёра");
+        Long newDirectorId = keyHolder.getKey().longValue();
+
+        if (newDirectorId == null) {
+            throw new NotFoundException("Не удалось получить ID созданного режиссера");
         }
+
+        director.setId(newDirectorId);
+
+        return director;
     }
 
     @Override

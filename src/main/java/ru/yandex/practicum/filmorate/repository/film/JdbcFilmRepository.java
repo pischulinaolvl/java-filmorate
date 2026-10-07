@@ -39,9 +39,9 @@ public class JdbcFilmRepository implements FilmRepository {
         if (film.getDescription().length() > 100) {
             throw new ConditionsNotMetException("Описание фильма слишком длинное");
         }
-        /*if (film.getReleaseDate() == null || film.getReleaseDate().isAfter(LocalDate.now())) {
+        if (film.getReleaseDate() == null || film.getReleaseDate().isAfter(LocalDate.now())) {
             throw new ConditionsNotMetException("Дата выхода не может быть в будущем");
-        }*/
+        }
         if (film.getDuration() == null || film.getDuration() <= 0) {
             throw new ConditionsNotMetException("Длительность должна быть положительной");
         }
@@ -136,9 +136,9 @@ public class JdbcFilmRepository implements FilmRepository {
         if (film.getDescription() != null && film.getDescription().length() > 100) {
             throw new ConditionsNotMetException("Описание фильма слишком длинное");
         }
-        /*if (film.getReleaseDate() == null || film.getReleaseDate().isAfter(LocalDate.now())) {
+        if (film.getReleaseDate() == null || film.getReleaseDate().isAfter(LocalDate.now())) {
             throw new ConditionsNotMetException("Дата выхода не может быть в будущем");
-        }*/
+        }
         if (film.getDuration() == null || film.getDuration() <= 0) {
             throw new ConditionsNotMetException("Длительность должна быть положительной");
         }
@@ -299,9 +299,6 @@ public class JdbcFilmRepository implements FilmRepository {
         return loadFilmsByIds(filmIds);
     }
 
-    /**
-     * Загружает полные Film (MPA + жанры) для списка id.
-     */
     private List<Film> loadFilmsByIds(List<Long> filmIds) {
         if (filmIds == null || filmIds.isEmpty()) {
             return List.of();

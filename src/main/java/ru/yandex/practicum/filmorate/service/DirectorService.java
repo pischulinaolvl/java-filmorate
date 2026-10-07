@@ -27,10 +27,6 @@ public class DirectorService {
         return directorRepository.getDirectors();
     }
 
-    public List<Director> getDirectors() {
-        return directorRepository.getDirectors();
-    }
-
     public Director updateDirector(Director director) {
         return directorRepository.updateDirector(director);
     }
