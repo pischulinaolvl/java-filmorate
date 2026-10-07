@@ -47,7 +47,8 @@ public class FilmMapper {
                                 Director newDir = new Director();
                                 newDir.setId(oldDir.getId());      // Копируем ID
                                 newDir.setName(oldDir.getName());  // Копируем Имя
-                                return newDir;})
+                                return newDir;
+                            })
                             .collect(Collectors.toList())
             );
         } else {
@@ -71,7 +72,7 @@ public class FilmMapper {
             return null;
         }
 
-        Film film = new Film();;
+        Film film = new Film();
 
         film.setName(request.getName());
         film.setDescription(request.getDescription());
@@ -101,7 +102,8 @@ public class FilmMapper {
                                 Director newDir = new Director();
                                 newDir.setId(oldDir.getId());      // Копируем ID
                                 newDir.setName(oldDir.getName());  // Копируем Имя
-                                return newDir;})
+                                return newDir;
+                            })
                             .collect(Collectors.toList())
             );
         } else {
@@ -116,7 +118,7 @@ public class FilmMapper {
             return null;
         }
 
-        Film film = new Film();;
+        Film film = new Film();
 
         film.setId(filmDto.getId());
         film.setName(filmDto.getName());
@@ -147,7 +149,7 @@ public class FilmMapper {
                                 Director newDir = new Director();
                                 newDir.setId(oldDir.getId());      // Копируем ID
                                 newDir.setName(oldDir.getName());  // Копируем Имя
-                                return newDir;})
+                                return newDir; })
                             .collect(Collectors.toList())
             );
         } else {
