@@ -90,4 +90,12 @@ public class FilmController {
         log.info("Запрос общих фильмов пользователей {} и {}", userId, friendId);
         return filmService.getCommonFilms(userId, friendId);
     }
+
+    @GetMapping("/director/{directorId}")
+    public List<FilmDto> getFilmsByDirector(
+            @PathVariable Long directorId,
+            @RequestParam(defaultValue = "likes") String sortBy) {
+
+        return filmService.getFilmsByDirector(directorId, sortBy);
+    }
 }

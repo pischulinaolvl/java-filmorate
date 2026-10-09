@@ -145,4 +145,12 @@ public class FilmService {
             throw new NotFoundException("Фильм с ID " + filmId + " не найден");
         }
     }
+
+    public List<FilmDto> getFilmsByDirector(Long directorId, String sortBy) {
+        if (!"likes".equals(sortBy) && !"year".equals(sortBy)) {
+            throw new IllegalArgumentException("Неверная сортировка. Допустимые значения: 'likes', 'year'");
+        }
+
+        return FilmMapper.mapToFilmDtoList(filmRepository.getFilmsByDirector(directorId, sortBy));
+    }
 }

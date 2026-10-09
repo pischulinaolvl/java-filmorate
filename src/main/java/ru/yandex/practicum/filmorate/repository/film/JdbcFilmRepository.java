@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.*;
-import ru.yandex.practicum.filmorate.repository.mappers.FilmRowMapper;
+import ru.yandex.practicum.filmorate.repository.mappers.DirectorRowMapper;
 import ru.yandex.practicum.filmorate.repository.mappers.FilmWithMpaRowMapper;
 
 import java.time.LocalDate;
@@ -97,6 +97,30 @@ public class JdbcFilmRepository implements FilmRepository {
             }
         }
 
+        if (film.getDirectors() != null && !film.getDirectors().isEmpty()) {
+            String insertGenreLinkSql = "INSERT INTO film_director (film_id, director_id) VALUES (?, ?)";
+            Set<Long> processedDirectorIds = new HashSet<>();
+
+            for (Director director : film.getDirectors()) {
+                if (director == null || director.getId() == null || !processedDirectorIds.add(director.getId())) {
+                    continue;
+                }
+
+                Long directorId = director.getId();
+
+                try {
+                    int rowsAffected = jdbcTemplate.update(insertGenreLinkSql, newFilmId, directorId);
+                } catch (org.springframework.dao.DataIntegrityViolationException e) {
+                    throw new NotFoundException(
+                            "Не удалось связать фильм с режиссёром ID: " + directorId +
+                                    ". Возможно, жанр отсутствует в базе данных. Проверьте data.sql."
+                    );
+                } catch (Exception e) {
+                    throw new RuntimeException("Ошибка при сохранении связи фильм-режиссёр: " + e.getMessage(), e);
+                }
+            }
+        }
+
         return film;
     }
 
@@ -111,9 +135,9 @@ public class JdbcFilmRepository implements FilmRepository {
         if (film.getDescription() != null && film.getDescription().length() > 100) {
             throw new ConditionsNotMetException("Описание фильма слишком длинное");
         }
-        if (film.getReleaseDate() == null || film.getReleaseDate().isAfter(LocalDate.now())) {
+        /*if (film.getReleaseDate() == null || film.getReleaseDate().isAfter(LocalDate.now())) {
             throw new ConditionsNotMetException("Дата выхода не может быть в будущем");
-        }
+        }*/
         if (film.getDuration() == null || film.getDuration() <= 0) {
             throw new ConditionsNotMetException("Длительность должна быть положительной");
         }
@@ -153,6 +177,24 @@ public class JdbcFilmRepository implements FilmRepository {
             }
         }
 
+        deleteLinksSql = "DELETE FROM film_director WHERE film_id = ?";
+        jdbcTemplate.update(deleteLinksSql, film.getId());
+
+        if (film.getDirectors() != null && !film.getDirectors().isEmpty()) {
+            String insertGenreLinkSql = "INSERT INTO film_director (film_id, director_id) VALUES (?, ?)";
+            for (Director director : film.getDirectors()) {
+                if (director != null && director.getId() != null) {
+                    try {
+                        jdbcTemplate.update(insertGenreLinkSql, film.getId(), director.getId());
+                    } catch (org.springframework.dao.DataIntegrityViolationException e) {
+                        throw new NotFoundException(
+                                "Не удалось обновить фильм: жанр с ID " + director.getId() + " не найден."
+                        );
+                    }
+                }
+            }
+        }
+
         return film;
     }
 
@@ -184,6 +226,12 @@ public class JdbcFilmRepository implements FilmRepository {
 
             film.setGenres(genres);
 
+            String directorSql = "SELECT d.* FROM director d JOIN film_director fd ON d.id = fd.director_id WHERE fd.film_id = ?";
+
+            List<Director> directors = jdbcTemplate.query(directorSql, new DirectorRowMapper(), id);
+
+            film.setDirectors(directors);
+
             return film;
         } catch (EmptyResultDataAccessException e) {
             return null;
@@ -195,10 +243,16 @@ public class JdbcFilmRepository implements FilmRepository {
 
     @Override
     public Map<Long, Film> getFilms() {
-        String sql = "SELECT * FROM film";
-        List<Film> films = jdbcTemplate.query(sql, new FilmRowMapper());
+        String idsSql = "SELECT id FROM film ORDER BY id";
+        List<Long> allFilmIds = jdbcTemplate.query(idsSql, (rs, rowNum) -> rs.getLong("id"));
 
-        return films.stream()
+        if (allFilmIds.isEmpty()) {
+            return new HashMap<>();
+        }
+
+        List<Film> fullFilms = loadFilmsByIds(allFilmIds);
+
+        return fullFilms.stream()
                 .collect(Collectors.toMap(Film::getId, f -> f));
     }
 
@@ -255,9 +309,6 @@ public class JdbcFilmRepository implements FilmRepository {
         return loadFilmsByIds(filmIds);
     }
 
-    /**
-     * Загружает полные Film (MPA + жанры) для списка id.
-     */
     private List<Film> loadFilmsByIds(List<Long> filmIds) {
         if (filmIds == null || filmIds.isEmpty()) {
             return List.of();
@@ -279,6 +330,7 @@ public class JdbcFilmRepository implements FilmRepository {
         Map<Long, Film> filmsById = new HashMap<>();
         for (Film film : loadedFilms) {
             film.setGenres(new ArrayList<>());
+            film.setDirectors(new ArrayList<>());
             filmsById.put(film.getId(), film);
         }
 
@@ -301,6 +353,26 @@ public class JdbcFilmRepository implements FilmRepository {
             }
         });
 
+        String directorsSql = """
+        SELECT fd.film_id, d.id, d.name
+        FROM film_director fd
+        JOIN director d ON d.id = fd.director_id
+        WHERE fd.film_id IN (:ids)
+        ORDER BY d.id
+        """;
+
+        namedParameterJdbcTemplate.query(directorsSql, idsParams, rs -> {
+            Long filmId = rs.getLong("film_id");
+            Film film = filmsById.get(filmId);
+
+            if (film != null) {
+                Director director = new Director();
+                director.setId(rs.getLong("id"));
+                director.setName(rs.getString("name"));
+                film.getDirectors().add(director);
+            }
+        });
+
         return filmIds.stream()
                 .map(filmsById::get)
                 .filter(Objects::nonNull)
@@ -318,6 +390,33 @@ public class JdbcFilmRepository implements FilmRepository {
                 """;
 
         return jdbcTemplate.queryForList(sql, Long.class, userId, friendId).stream()
+                .map(this::findFilmById)
+                .toList();
+    }
+
+    @Override
+    public List<Film> getFilmsByDirector(Long directorId, String sortBy) {
+        StringBuilder sql = new StringBuilder("""
+        SELECT f.id
+        FROM film f
+        JOIN film_director fd ON fd.film_id = f.id
+                             and fd.director_id = :directorId
+    """);
+
+        MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("directorId", directorId);
+
+        if ("likes".equals(sortBy)) {
+            sql.append("""
+            LEFT JOIN likes l ON f.id = l.film_id
+            GROUP BY f.id
+            ORDER BY COUNT(l.user_id) DESC, f.id ASC
+        """);
+        } else if ("year".equals(sortBy)) {
+            sql.append(" ORDER BY f.release_date, f.id ASC");
+        }
+
+        return namedParameterJdbcTemplate.queryForList(sql.toString(), params, Long.class).stream()
                 .map(this::findFilmById)
                 .toList();
     }
