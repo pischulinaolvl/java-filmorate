@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.dto.user.FriendDto;
 import ru.yandex.practicum.filmorate.dto.user.NewUserRequest;
 import ru.yandex.practicum.filmorate.dto.user.UpdateUserRequest;
@@ -12,6 +13,8 @@ import ru.yandex.practicum.filmorate.dto.film.FilmDto;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.Event;
+import ru.yandex.practicum.filmorate.repository.event.EventRepository;
 import ru.yandex.practicum.filmorate.repository.friend.FriendRepository;
 import ru.yandex.practicum.filmorate.repository.film.FilmMapper;
 import ru.yandex.practicum.filmorate.repository.film.FilmRepository;
@@ -29,14 +32,24 @@ public class UserService {
     private final FriendRepository friendRepository;
     private final FilmRepository filmRepository;
     private final LikeRepository likeRepository;
+    private final EventRepository eventRepository;
 
     @Autowired
     public UserService(@Qualifier("UserDbStorage") UserRepository userRepository, FriendRepository friendRepository,
-                       @Qualifier("FilmDbStorage") FilmRepository filmRepository, LikeRepository likeRepository) {
+                       @Qualifier("FilmDbStorage") FilmRepository filmRepository, LikeRepository likeRepository,
+                       EventRepository eventRepository) {
         this.userRepository = userRepository;
         this.friendRepository = friendRepository;
         this.filmRepository = filmRepository;
         this.likeRepository = likeRepository;
+        this.eventRepository = eventRepository;
+    }
+
+    public List<Event> getFeed(Long userId) {
+        if (userRepository.findUserById(userId) == null) {
+            throw new NotFoundException("Пользователь не найден с ID: " + userId);
+        }
+        return eventRepository.findByUserId(userId);
     }
 
     public List<FilmDto> getRecommendations(Long userId) {
@@ -47,6 +60,7 @@ public class UserService {
         return FilmMapper.mapToFilmDtoList(filmRepository.getFilmsByIds(filmIds));
     }
 
+    @Transactional
     public void addFriend(Long userId, Long friendId, Logger log) {
         log.info("Пользователь id = {} хочет добавить друга с id = {}", userId, friendId);
         User user = userRepository.findUserById(userId);
@@ -67,6 +81,7 @@ public class UserService {
             } else {
                 friendRepository.createFriendship(userId, friendId, "Pending");
             }
+            eventRepository.add(userId, "FRIEND", "ADD", friendId);
         }
     }
 
@@ -108,6 +123,7 @@ public class UserService {
         return users;
     }
 
+    @Transactional
     public void removeFriend(Long userId, Long friendId, Logger log) {
         log.info("Пользователь id = {} хочет удалить друга с id = {}", userId, friendId);
         User user = userRepository.findUserById(userId);
@@ -122,6 +138,7 @@ public class UserService {
             log.warn("У пользователя с ID {} нет друзей", userId);
         } else if (friends.containsKey(friendId)) {
             friendRepository.removeFriendship(userId, friendId);
+            eventRepository.add(userId, "FRIEND", "REMOVE", friendId);
         } else {
             return;
         }

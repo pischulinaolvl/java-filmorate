@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.dto.film.FilmDto;
 import ru.yandex.practicum.filmorate.dto.film.NewFilmRequest;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
@@ -15,6 +16,7 @@ import ru.yandex.practicum.filmorate.repository.film.FilmRepository;
 import ru.yandex.practicum.filmorate.repository.genre.GenreRepository;
 import ru.yandex.practicum.filmorate.repository.mpa.MpaRepository;
 import ru.yandex.practicum.filmorate.repository.like.LikeRepository;
+import ru.yandex.practicum.filmorate.repository.event.EventRepository;
 import ru.yandex.practicum.filmorate.repository.user.UserRepository;
 
 import java.util.*;
@@ -27,20 +29,23 @@ public class FilmService {
     private final MpaRepository mpaRepository;
     private final LikeRepository likeRepository;
     private final GenreRepository genreRepository;
+    private final EventRepository eventRepository;
 
     @Autowired
     public FilmService(@Qualifier("FilmDbStorage") FilmRepository filmRepository,
                        @Qualifier("UserDbStorage") UserRepository userRepository,
                        MpaRepository mpaRepository,
                        LikeRepository likeRepository,
-                       GenreRepository genreRepository) {
+                       GenreRepository genreRepository, EventRepository eventRepository) {
         this.filmRepository = filmRepository;
         this.userRepository = userRepository;
         this.mpaRepository = mpaRepository;
         this.likeRepository = likeRepository;
         this.genreRepository = genreRepository;
+        this.eventRepository = eventRepository;
     }
 
+    @Transactional
     public String addLike(Long filmId, Long userId, Logger log) {
         log.info("Попытка поставить лайк: фильм={}, пользователь={}", filmId, userId);
 
@@ -54,12 +59,15 @@ public class FilmService {
             throw new NotFoundException("Пользователь с ID " + userId + " не найден");
         }
 
-        likeRepository.putLike(filmId, userId);
+        if (likeRepository.putLike(filmId, userId)) {
+            eventRepository.add(userId, "LIKE", "ADD", filmId);
+        }
 
         log.info("Лайк успешно добавлен: фильм={}, пользователь={}", filmId, userId);
         return "Лайк успешно добавлен";
     }
 
+    @Transactional
     public void removeLike(Long filmId, Long userId, Logger log) {
         log.info("Попытка убрать лайк: фильм={}, пользователь={}", filmId, userId);
 
@@ -73,7 +81,9 @@ public class FilmService {
             throw new NotFoundException("Пользователь с ID " + userId + " не найден");
         }
 
-        likeRepository.deleteLike(filmId, userId);
+        if (likeRepository.deleteLike(filmId, userId)) {
+            eventRepository.add(userId, "LIKE", "REMOVE", filmId);
+        }
 
         log.info("Лайк успешно удален: фильм={}, пользователь={}", filmId, userId);
     }
