@@ -244,10 +244,16 @@ public class JdbcFilmRepository implements FilmRepository {
 
     @Override
     public Map<Long, Film> getFilms() {
-        String sql = "SELECT * FROM film";
-        List<Film> films = jdbcTemplate.query(sql, new FilmRowMapper());
+        String idsSql = "SELECT id FROM film ORDER BY id";
+        List<Long> allFilmIds = jdbcTemplate.query(idsSql, (rs, rowNum) -> rs.getLong("id"));
 
-        return films.stream()
+        if (allFilmIds.isEmpty()) {
+            return new HashMap<>();
+        }
+
+        List<Film> fullFilms = loadFilmsByIds(allFilmIds);
+
+        return fullFilms.stream()
                 .collect(Collectors.toMap(Film::getId, f -> f));
     }
 
@@ -325,6 +331,7 @@ public class JdbcFilmRepository implements FilmRepository {
         Map<Long, Film> filmsById = new HashMap<>();
         for (Film film : loadedFilms) {
             film.setGenres(new ArrayList<>());
+            film.setDirectors(new ArrayList<>());
             filmsById.put(film.getId(), film);
         }
 
@@ -344,6 +351,26 @@ public class JdbcFilmRepository implements FilmRepository {
                 genre.setId(rs.getLong("id"));
                 genre.setName(rs.getString("name"));
                 film.getGenres().add(genre);
+            }
+        });
+
+        String directorsSql = """
+        SELECT fd.film_id, d.id, d.name
+        FROM film_director fd
+        JOIN director d ON d.id = fd.director_id
+        WHERE fd.film_id IN (:ids)
+        ORDER BY d.id
+        """;
+
+        namedParameterJdbcTemplate.query(directorsSql, idsParams, rs -> {
+            Long filmId = rs.getLong("film_id");
+            Film film = filmsById.get(filmId);
+
+            if (film != null) {
+                Director director = new Director();
+                director.setId(rs.getLong("id"));
+                director.setName(rs.getString("name"));
+                film.getDirectors().add(director);
             }
         });
 
