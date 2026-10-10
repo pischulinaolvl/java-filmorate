@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dto.film.FilmDto;
 import ru.yandex.practicum.filmorate.dto.film.NewFilmRequest;
+import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.MpaaRating;
@@ -152,5 +153,35 @@ public class FilmService {
         }
 
         return FilmMapper.mapToFilmDtoList(filmRepository.getFilmsByDirector(directorId, sortBy));
+    }
+
+    public List<FilmDto> search(String query, String by) {
+        if (query == null || query.isBlank()) {
+            throw new ConditionsNotMetException("Параметр query обязателен");
+        }
+        if (by == null || by.isBlank()) {
+            throw new ConditionsNotMetException("Параметр by обязателен");
+        }
+
+        boolean byTitle = false;
+        boolean byDirector = false;
+        for (String part : by.split(",")) {
+            String value = part.trim().toLowerCase();
+            if ("title".equals(value)) {
+                byTitle = true;
+            } else if ("director".equals(value)) {
+                byDirector = true;
+            } else if (!value.isEmpty()) {
+                throw new ConditionsNotMetException(
+                        "Неверное значение by. Допустимо: title, director или title,director");
+            }
+        }
+        if (!byTitle && !byDirector) {
+            throw new ConditionsNotMetException(
+                    "Параметр by должен содержать title и/или director");
+        }
+
+        return FilmMapper.mapToFilmDtoList(
+                filmRepository.search(query.trim(), byTitle, byDirector));
     }
 }

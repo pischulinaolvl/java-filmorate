@@ -114,4 +114,8 @@ public class InMemoryFilmRepository implements FilmRepository {
         return null;
     }
 
+    @Override
+    public List<Film> search(String query, boolean byTitle, boolean byDirector) {
+        return null;
+    }
 }
