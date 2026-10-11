@@ -85,7 +85,7 @@ public class UserService {
         }
     }
 
-    public List<FriendDto> getFriends(Long userId, Logger log) {
+    public List<UserDto> getFriends(Long userId, Logger log) {
         log.info("Вывод списка друзей для пользователя с id = {}", userId);
         if (userId == null || userId <= 0) {
             throw new ConditionsNotMetException("Пользователь должен быть заполнен");
@@ -99,11 +99,7 @@ public class UserService {
         Map<Long, String> friends = friendRepository.getFriends(userId, false);
 
         return friends.entrySet().stream()
-                .map(entry -> {
-                    Long friendId = entry.getKey();
-                    String friendName = entry.getValue();
-                    return new FriendDto(friendId, friendName);
-                })
+                .map(entry -> getUserById(entry.getKey()))
                 .collect(Collectors.toList());
     }
 

@@ -68,7 +68,7 @@ public class FilmController {
     }
 
     @DeleteMapping("/{id}/like/{userId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT) // Возвращает 204 No Content
+    //@ResponseStatus(HttpStatus.NO_CONTENT) // Возвращает 204 No Content
     public void removeLike(@PathVariable Long id, @PathVariable Long userId) {
         log.info("Пользователь {} убирает лайк у фильма {}", userId, id);
         filmService.removeLike(id, userId, log);

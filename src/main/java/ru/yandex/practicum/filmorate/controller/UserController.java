@@ -84,7 +84,7 @@ public class UserController {
     }
 
     @GetMapping("/{id}/friends")
-    public List<FriendDto> getFriends(@PathVariable Long id) {
+    public List<UserDto> getFriends(@PathVariable Long id) {
         log.info("Запрос списка друзей для пользователя {}", id);
         return userService.getFriends(id, log);
     }

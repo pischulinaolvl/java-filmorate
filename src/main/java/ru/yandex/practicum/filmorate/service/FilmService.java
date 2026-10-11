@@ -162,7 +162,13 @@ public class FilmService {
             throw new IllegalArgumentException("Неверная сортировка. Допустимые значения: 'likes', 'year'");
         }
 
-        return FilmMapper.mapToFilmDtoList(filmRepository.getFilmsByDirector(directorId, sortBy));
+        List<FilmDto> result = FilmMapper.mapToFilmDtoList(filmRepository.getFilmsByDirector(directorId, sortBy));
+
+        if (result.isEmpty()) {
+            throw new NotFoundException("Фильмы данного режиссера не найдены (ID " + directorId + ")");
+        }
+
+        return result;
     }
 
     public List<FilmDto> search(String query, String by) {

@@ -158,8 +158,10 @@ public class JdbcFilmRepository implements FilmRepository {
 
         if (film.getGenres() != null && !film.getGenres().isEmpty()) {
             String insertGenreLinkSql = "INSERT INTO film_genre (film_id, genre_id) VALUES (?, ?)";
+            Set<Long> processedGenreIds = new HashSet<>();
+
             for (Genre genre : film.getGenres()) {
-                if (genre != null && genre.getId() != null) {
+                if (genre != null && genre.getId() != null && processedGenreIds.add(genre.getId())) {
                     try {
                         jdbcTemplate.update(insertGenreLinkSql, film.getId(), genre.getId());
                     } catch (org.springframework.dao.DataIntegrityViolationException e) {
@@ -189,7 +191,7 @@ public class JdbcFilmRepository implements FilmRepository {
             }
         }
 
-        return film;
+        return findFilmById(film.getId());
     }
 
     @Override
