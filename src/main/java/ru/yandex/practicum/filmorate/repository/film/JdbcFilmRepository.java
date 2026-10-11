@@ -38,9 +38,6 @@ public class JdbcFilmRepository implements FilmRepository {
         if (film.getDescription().length() > 100) {
             throw new ConditionsNotMetException("Описание фильма слишком длинное");
         }
-        if (film.getReleaseDate() == null || film.getReleaseDate().isAfter(LocalDate.now())) {
-            throw new ConditionsNotMetException("Дата выхода не может быть в будущем");
-        }
         if (film.getDuration() == null || film.getDuration() <= 0) {
             throw new ConditionsNotMetException("Длительность должна быть положительной");
         }
@@ -135,9 +132,6 @@ public class JdbcFilmRepository implements FilmRepository {
         if (film.getDescription() != null && film.getDescription().length() > 100) {
             throw new ConditionsNotMetException("Описание фильма слишком длинное");
         }
-        /*if (film.getReleaseDate() == null || film.getReleaseDate().isAfter(LocalDate.now())) {
-            throw new ConditionsNotMetException("Дата выхода не может быть в будущем");
-        }*/
         if (film.getDuration() == null || film.getDuration() <= 0) {
             throw new ConditionsNotMetException("Длительность должна быть положительной");
         }
@@ -419,5 +413,49 @@ public class JdbcFilmRepository implements FilmRepository {
         return namedParameterJdbcTemplate.queryForList(sql.toString(), params, Long.class).stream()
                 .map(this::findFilmById)
                 .toList();
+    }
+
+    @Override
+    public List<Film> search(String query, boolean byTitle, boolean byDirector) {
+        String pattern = "%" + query.toLowerCase() + "%";
+
+        StringBuilder sql = new StringBuilder("""
+            SELECT f.id
+            FROM film f
+            LEFT JOIN likes l ON f.id = l.film_id
+            """);
+
+        if (byDirector) {
+            sql.append("""
+                LEFT JOIN film_director fd ON fd.film_id = f.id
+                LEFT JOIN director d ON d.id = fd.director_id
+                """);
+        }
+
+        sql.append(" WHERE ");
+
+        List<String> conditions = new ArrayList<>();
+        if (byTitle) {
+            conditions.add("LOWER(f.name) LIKE :pattern");
+        }
+        if (byDirector) {
+            conditions.add("LOWER(d.name) LIKE :pattern");
+        }
+        sql.append(String.join(" OR ", conditions));
+
+        sql.append("""
+             GROUP BY f.id
+             ORDER BY COUNT(l.user_id) DESC, f.id ASC
+            """);
+
+        MapSqlParameterSource params = new MapSqlParameterSource("pattern", pattern);
+
+        List<Long> filmIds = namedParameterJdbcTemplate.query(
+                sql.toString(),
+                params,
+                (rs, rowNum) -> rs.getLong("id")
+        );
+
+        return loadFilmsByIds(filmIds);
     }
 }
