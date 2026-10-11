@@ -20,7 +20,7 @@ public class JdbcLikeRepository implements LikeRepository {
     }
 
     @Override
-    public void putLike(Long filmId, Long userId) {
+    public boolean putLike(Long filmId, Long userId) {
         if (filmId == null || userId == null) {
             throw new IllegalArgumentException("ID фильма и пользователя обязательны");
         }
@@ -29,21 +29,23 @@ public class JdbcLikeRepository implements LikeRepository {
 
         try {
             jdbcTemplate.update(sql, filmId, userId);
+            return true;
         } catch (DuplicateKeyException e) {
             // Пользователь уже лайкнул этот фильм, игнорируем
+            return false;
         } catch (DataIntegrityViolationException e) {
             throw new NotFoundException("Не удалось поставить лайк: фильм или пользователь не найдены");
         }
     }
 
     @Override
-    public void deleteLike(Long filmId, Long userId) {
+    public boolean deleteLike(Long filmId, Long userId) {
         if (filmId == null || userId == null) {
             throw new IllegalArgumentException("ID фильма и пользователя обязательны");
         }
 
         String sql = "DELETE FROM likes WHERE film_id = ? AND user_id = ?";
-        jdbcTemplate.update(sql, filmId, userId);
+        return jdbcTemplate.update(sql, filmId, userId) > 0;
     }
 
     @Override
