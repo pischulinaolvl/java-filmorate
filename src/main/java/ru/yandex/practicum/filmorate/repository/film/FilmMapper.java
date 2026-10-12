@@ -45,8 +45,8 @@ public class FilmMapper {
                     film.getDirectors().stream()
                             .map(oldDir -> {
                                 Director newDir = new Director();
-                                newDir.setId(oldDir.getId());      // Копируем ID
-                                newDir.setName(oldDir.getName());  // Копируем Имя
+                                newDir.setId(oldDir.getId());
+                                newDir.setName(oldDir.getName());
                                 return newDir;
                             })
                             .collect(Collectors.toList())
@@ -100,8 +100,8 @@ public class FilmMapper {
                     request.getDirectors().stream()
                             .map(oldDir -> {
                                 Director newDir = new Director();
-                                newDir.setId(oldDir.getId());      // Копируем ID
-                                newDir.setName(oldDir.getName());  // Копируем Имя
+                                newDir.setId(oldDir.getId());
+                                newDir.setName(oldDir.getName());
                                 return newDir;
                             })
                             .collect(Collectors.toList())
@@ -147,9 +147,10 @@ public class FilmMapper {
                     filmDto.getDirectors().stream()
                             .map(oldDir -> {
                                 Director newDir = new Director();
-                                newDir.setId(oldDir.getId());      // Копируем ID
-                                newDir.setName(oldDir.getName());  // Копируем Имя
-                                return newDir; })
+                                newDir.setId(oldDir.getId());
+                                newDir.setName(oldDir.getName());
+                                return newDir;
+                            })
                             .collect(Collectors.toList())
             );
         } else {
@@ -158,5 +159,4 @@ public class FilmMapper {
 
         return film;
     }
-
 }

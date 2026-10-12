@@ -60,9 +60,8 @@ public class FilmService {
             throw new NotFoundException("Пользователь с ID " + userId + " не найден");
         }
 
-        if (likeRepository.putLike(filmId, userId)) {
-            eventRepository.add(userId, "LIKE", "ADD", filmId);
-        }
+        likeRepository.putLike(filmId, userId);
+        eventRepository.add(userId, "LIKE", "ADD", filmId);
 
         log.info("Лайк успешно добавлен: фильм={}, пользователь={}", filmId, userId);
         return "Лайк успешно добавлен";

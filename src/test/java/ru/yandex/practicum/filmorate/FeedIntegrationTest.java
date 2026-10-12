@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
+import ru.yandex.practicum.filmorate.dto.review.ReviewDto;
 import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.service.FilmService;
@@ -37,7 +38,7 @@ class FeedIntegrationTest {
         filmService.addLike(9001L, 9001L, log);
         filmService.addLike(9001L, 9001L, log);
 
-        Review review = new Review();
+        ReviewDto review = new ReviewDto();
         review.setUserId(9001L);
         review.setFilmId(9001L);
         review.setContent("Good film");
@@ -50,10 +51,10 @@ class FeedIntegrationTest {
         userService.removeFriend(9001L, 9002L, log);
 
         List<Event> feed = userService.getFeed(9001L);
-        assertEquals(List.of("FRIEND:ADD", "LIKE:ADD", "REVIEW:ADD", "REVIEW:UPDATE",
+        assertEquals(List.of("FRIEND:ADD", "LIKE:ADD", "LIKE:ADD", "REVIEW:ADD", "REVIEW:UPDATE",
                         "REVIEW:REMOVE", "LIKE:REMOVE", "FRIEND:REMOVE"),
                 feed.stream().map(event -> event.eventType() + ":" + event.operation()).toList());
-        assertEquals(List.of(9002L, 9001L, review.getReviewId(), review.getReviewId(),
+        assertEquals(List.of(9002L, 9001L, 9001L, review.getReviewId(), review.getReviewId(),
                         review.getReviewId(), 9001L, 9002L),
                 feed.stream().map(Event::entityId).toList());
         assertEquals(List.of(), userService.getFeed(9002L));
