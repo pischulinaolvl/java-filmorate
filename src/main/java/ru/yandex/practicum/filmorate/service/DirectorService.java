@@ -2,7 +2,6 @@ package ru.yandex.practicum.filmorate.service;
 
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dto.director.DirectorDto;
-import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.repository.director.DirectorMapper;
 import ru.yandex.practicum.filmorate.repository.director.DirectorRepository;
 
