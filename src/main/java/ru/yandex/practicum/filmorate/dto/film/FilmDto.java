@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import ru.yandex.practicum.filmorate.dto.genre.GenreDto;
 import ru.yandex.practicum.filmorate.dto.mpa.MpaaRatingDto;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.time.LocalDate;
@@ -23,6 +24,7 @@ public class FilmDto {
 
     private MpaaRatingDto mpa;
     private List<GenreDto> genres;
+    private List<Director> directors;
 
     public FilmDto(Film film) {
         this.id = film.getId();
@@ -38,6 +40,16 @@ public class FilmDto {
         if (film.getGenres() != null) {
             this.genres = film.getGenres().stream()
                     .map(GenreDto::new)
+                    .collect(Collectors.toList());
+        }
+
+        if (film.getDirectors() != null) {
+            this.directors = film.getDirectors().stream()
+                    .map(oldDir -> {
+                        Director newDir = new Director();
+                        newDir.setId(oldDir.getId());      // Копируем ID
+                        newDir.setName(oldDir.getName());  // Копируем Имя
+                        return newDir; })
                     .collect(Collectors.toList());
         }
     }

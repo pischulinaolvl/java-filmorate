@@ -5,10 +5,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.dto.user.FriendDto;
 import ru.yandex.practicum.filmorate.dto.user.NewUserRequest;
 import ru.yandex.practicum.filmorate.dto.user.UpdateUserRequest;
 import ru.yandex.practicum.filmorate.dto.user.UserDto;
+import ru.yandex.practicum.filmorate.dto.film.FilmDto;
+import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.util.*;
@@ -47,6 +48,26 @@ public class UserController {
         return userService.getUserById(userId);
     }
 
+    @GetMapping("/{id}/feed")
+    public List<Event> getFeed(@PathVariable Long id) {
+        return userService.getFeed(id);
+    }
+
+    // Рекомендуем фильмы всех пользователей с максимальным числом общих лайков с текущим пользователем.
+    // В ответ попадают только фильмы, которые текущий пользователь ещё не лайкнул.
+    @GetMapping("/{id}/recommendations")
+    public List<FilmDto> getRecommendations(@PathVariable Long id) {
+        log.info("Запрос рекомендаций для пользователя {}", id);
+        return userService.getRecommendations(id);
+    }
+
+    @DeleteMapping("/{userId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeUser(@PathVariable long userId) {
+        log.info("Удаление пользователя с ID: {}", userId);
+        userService.removeUser(userId);
+    }
+
     @PutMapping("/{id}/friends/{friendId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void addFriend(@PathVariable Long id, @PathVariable Long friendId) {
@@ -62,7 +83,7 @@ public class UserController {
     }
 
     @GetMapping("/{id}/friends")
-    public List<FriendDto> getFriends(@PathVariable Long id) {
+    public List<UserDto> getFriends(@PathVariable Long id) {
         log.info("Запрос списка друзей для пользователя {}", id);
         return userService.getFriends(id, log);
     }

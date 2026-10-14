@@ -16,4 +16,5 @@ public class Film {
     Long duration; // продолжительность фильма
     MpaaRating mpa;
     List<Genre> genres;
+    List<Director> directors;
 }

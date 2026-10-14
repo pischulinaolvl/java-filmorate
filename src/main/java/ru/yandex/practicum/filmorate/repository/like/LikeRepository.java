@@ -1,11 +1,15 @@
 package ru.yandex.practicum.filmorate.repository.like;
 
-public interface LikeRepository {
-    void putLike(Long filmId, Long userId);
+import java.util.List;
 
-    void deleteLike(Long filmId, Long userId);
+public interface LikeRepository {
+    boolean putLike(Long filmId, Long userId);
+
+    boolean deleteLike(Long filmId, Long userId);
 
     int getLikesCount(Long filmId);
 
     boolean isLikedByUser(Long filmId, Long userId); // Опционально, полезно для фронтенда
+
+    List<Long> getRecommendationFilmIds(Long userId);
 }

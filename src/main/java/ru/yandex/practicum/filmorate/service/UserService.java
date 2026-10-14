@@ -4,14 +4,20 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.dto.user.FriendDto;
+import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.dto.user.NewUserRequest;
 import ru.yandex.practicum.filmorate.dto.user.UpdateUserRequest;
 import ru.yandex.practicum.filmorate.dto.user.UserDto;
+import ru.yandex.practicum.filmorate.dto.film.FilmDto;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.Event;
+import ru.yandex.practicum.filmorate.repository.event.EventRepository;
 import ru.yandex.practicum.filmorate.repository.friend.FriendRepository;
+import ru.yandex.practicum.filmorate.repository.film.FilmMapper;
+import ru.yandex.practicum.filmorate.repository.film.FilmRepository;
+import ru.yandex.practicum.filmorate.repository.like.LikeRepository;
 import ru.yandex.practicum.filmorate.repository.user.UserMapper;
 import ru.yandex.practicum.filmorate.repository.user.UserRepository;
 
@@ -23,13 +29,37 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final FriendRepository friendRepository;
+    private final FilmRepository filmRepository;
+    private final LikeRepository likeRepository;
+    private final EventRepository eventRepository;
 
     @Autowired
-    public UserService(@Qualifier("UserDbStorage") UserRepository userRepository, FriendRepository friendRepository) {
+    public UserService(@Qualifier("UserDbStorage") UserRepository userRepository, FriendRepository friendRepository,
+                       @Qualifier("FilmDbStorage") FilmRepository filmRepository, LikeRepository likeRepository,
+                       EventRepository eventRepository) {
         this.userRepository = userRepository;
         this.friendRepository = friendRepository;
+        this.filmRepository = filmRepository;
+        this.likeRepository = likeRepository;
+        this.eventRepository = eventRepository;
     }
 
+    public List<Event> getFeed(Long userId) {
+        if (userRepository.findUserById(userId) == null) {
+            throw new NotFoundException("Пользователь не найден с ID: " + userId);
+        }
+        return eventRepository.findByUserId(userId);
+    }
+
+    public List<FilmDto> getRecommendations(Long userId) {
+        if (userRepository.findUserById(userId) == null) {
+            throw new NotFoundException("Пользователь не найден с ID: " + userId);
+        }
+        List<Long> filmIds = likeRepository.getRecommendationFilmIds(userId);
+        return FilmMapper.mapToFilmDtoList(filmRepository.getFilmsByIds(filmIds));
+    }
+
+    @Transactional
     public void addFriend(Long userId, Long friendId, Logger log) {
         log.info("Пользователь id = {} хочет добавить друга с id = {}", userId, friendId);
         User user = userRepository.findUserById(userId);
@@ -50,10 +80,11 @@ public class UserService {
             } else {
                 friendRepository.createFriendship(userId, friendId, "Pending");
             }
+            eventRepository.add(userId, "FRIEND", "ADD", friendId);
         }
     }
 
-    public List<FriendDto> getFriends(Long userId, Logger log) {
+    public List<UserDto> getFriends(Long userId, Logger log) {
         log.info("Вывод списка друзей для пользователя с id = {}", userId);
         if (userId == null || userId <= 0) {
             throw new ConditionsNotMetException("Пользователь должен быть заполнен");
@@ -67,11 +98,7 @@ public class UserService {
         Map<Long, String> friends = friendRepository.getFriends(userId, false);
 
         return friends.entrySet().stream()
-                .map(entry -> {
-                    Long friendId = entry.getKey();
-                    String friendName = entry.getValue();
-                    return new FriendDto(friendId, friendName);
-                })
+                .map(entry -> getUserById(entry.getKey()))
                 .collect(Collectors.toList());
     }
 
@@ -91,6 +118,7 @@ public class UserService {
         return users;
     }
 
+    @Transactional
     public void removeFriend(Long userId, Long friendId, Logger log) {
         log.info("Пользователь id = {} хочет удалить друга с id = {}", userId, friendId);
         User user = userRepository.findUserById(userId);
@@ -105,6 +133,7 @@ public class UserService {
             log.warn("У пользователя с ID {} нет друзей", userId);
         } else if (friends.containsKey(friendId)) {
             friendRepository.removeFriendship(userId, friendId);
+            eventRepository.add(userId, "FRIEND", "REMOVE", friendId);
         } else {
             return;
         }
@@ -173,6 +202,12 @@ public class UserService {
         }
 
         return UserMapper.mapToUserDto(user);
+    }
+
+    public void removeUser(long userId) {
+        if (userRepository.removeUser(userId) == 0) {
+            throw new NotFoundException("Пользователь не найден с ID: " + userId);
+        }
     }
 
     public List<UserDto> getUsers() {
