@@ -9,7 +9,6 @@ import ru.yandex.practicum.filmorate.model.User;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class UserMapper {
-
     public static User mapToUser(NewUserRequest request) {
         User user = new User();;
         user.setEmail(request.getEmail());

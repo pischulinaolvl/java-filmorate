@@ -8,12 +8,10 @@ import java.sql.SQLException;
 
 public class DirectorRowMapper implements RowMapper<Director> {
     @Override
-    public Director mapRow(ResultSet rs, int rowNum) throws SQLException {
-        Director director = new Director();
-
-        director.setId(rs.getLong("id"));
-        director.setName(rs.getString("name"));
-
-        return director;
+    public Director mapRow(ResultSet currentRow, int rowNum) throws SQLException {
+        return Director.builder()
+                .id(currentRow.getLong("id"))
+                .name(currentRow.getString("name"))
+                .build();
     }
 }

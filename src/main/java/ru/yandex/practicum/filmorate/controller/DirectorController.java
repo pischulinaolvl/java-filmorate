@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.dto.director.DirectorDto;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.service.DirectorService;
 
@@ -18,24 +19,23 @@ public class DirectorController {
     }
 
     @GetMapping
-    public List<Director> getAllDirectors() {
+    public List<DirectorDto> getAllDirectors() {
         return directorService.getAllDirectors();
     }
 
-
     @GetMapping("/{id}")
-    public Director getDirectorById(@PathVariable Long id) {
+    public DirectorDto getDirectorById(@PathVariable Long id) {
         return directorService.getDirectorById(id);
     }
 
     @PostMapping
-    public Director createDirector(@RequestBody Director director) {
-        return directorService.createDirector(director);
+    public DirectorDto createDirector(@RequestBody DirectorDto directorDto) {
+        return directorService.createDirector(directorDto);
     }
 
     @PutMapping
-    public Director updateDirector(@RequestBody Director director) {
-        return directorService.updateDirector(director);
+    public DirectorDto updateDirector(@RequestBody DirectorDto directorDto) {
+        return directorService.updateDirector(directorDto);
     }
 
     @DeleteMapping("/{id}")

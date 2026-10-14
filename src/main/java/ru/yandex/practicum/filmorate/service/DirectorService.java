@@ -1,7 +1,9 @@
 package ru.yandex.practicum.filmorate.service;
 
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dto.director.DirectorDto;
 import ru.yandex.practicum.filmorate.model.Director;
+import ru.yandex.practicum.filmorate.repository.director.DirectorMapper;
 import ru.yandex.practicum.filmorate.repository.director.DirectorRepository;
 
 import java.util.List;
@@ -15,20 +17,20 @@ public class DirectorService {
         this.directorRepository = directorRepository;
     }
 
-    public Director createDirector(Director director) {
-        return directorRepository.createDirector(director);
+    public DirectorDto createDirector(DirectorDto directorDto) {
+        return DirectorMapper.mapToDirectorDto(directorRepository.createDirector(DirectorMapper.mapToDirector(directorDto)));
     }
 
-    public Director getDirectorById(Long id) {
-        return directorRepository.findDirectorById(id);
+    public DirectorDto getDirectorById(Long id) {
+        return DirectorMapper.mapToDirectorDto(directorRepository.findDirectorById(id));
     }
 
-    public List<Director> getAllDirectors() {
-        return directorRepository.getDirectors();
+    public List<DirectorDto> getAllDirectors() {
+        return DirectorMapper.mapToDirectorDtoList(directorRepository.getDirectors());
     }
 
-    public Director updateDirector(Director director) {
-        return directorRepository.updateDirector(director);
+    public DirectorDto updateDirector(DirectorDto directorDto) {
+        return DirectorMapper.mapToDirectorDto(directorRepository.updateDirector(DirectorMapper.mapToDirector(directorDto)));
     }
 
     public void deleteDirector(Long id) {
